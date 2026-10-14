@@ -23,3 +23,12 @@ These are personal notes that are captured as part of my own learning.
 # Why learn this?
 
 Combines system design, programming practices and real world computing knowledge of how your computer actually runs software, different from typical web-based backend systems.
+
+# Tracking the progress
+
+We have two remotes tracking this project: Codecrafters and Github (such that I can work on different machines). 
+
+For future commits, we can choose the destination as such:
+
+git push github master   # Upload to GitHub
+git push origin master   # Upload to CodeCrafters
