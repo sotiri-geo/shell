@@ -2,9 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRun(t *testing.T) {
@@ -37,6 +41,32 @@ func TestRun(t *testing.T) {
 
 		if got := output.String(); got != want {
 			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("WithExitCommand", func(t *testing.T) {
+		// Build the shell into a temporary directory.
+		binary := filepath.Join(t.TempDir(), "shell")
+		build := exec.Command("go", "build", "-o", binary, ".")
+		if output, err := build.CombinedOutput(); err != nil {
+			t.Fatalf("build failed: %v\n%s", err, output)
+		}
+
+		// Fail if the shell takes too long to exit.
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		cmd := exec.CommandContext(ctx, binary)
+		cmd.Stdin = strings.NewReader("exit\nshould-not-run\n")
+
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("expected exit status 0: %v\n%s", err, output)
+		}
+
+		// The shell should stop after exit, displaying only its first prompt.
+		if got := string(output); got != "$ " {
+			t.Errorf("got output %q, want %q", got, "$ ")
 		}
 	})
 }

@@ -19,7 +19,13 @@ Recording where I was up to and what needs to be done.
   stdout causing issues with always printing out the `$ ` prompt to stdout.
 * Termintating at `io.EOF` and writing remaining bytes to writer such that it renders correctly
 * Added tests for cli to test entrypoint.
+* Implemented test that builds and runs the binary and invokes the `exit` command checking that the subshell exits with status 0 (successful).
+
+### Context
+
+**Exit builtin**
+The exit utility shall cause the shell to exit from its current execution environment with the exit status specified by the unsigned decimal integer n. If the current execution environment is a subshell environment, the shell shall exit from the subshell environment with the specified exit status and continue in the environment from which that subshell environment was invoked; otherwise, the shell utility shall terminate with the specified exit status. If n is specified, but its value is not between 0 and 255 inclusively, the exit status is undefined.
 
 ### Todo 
 
-* 
+* Implement the `exit` builtin command

@@ -34,7 +34,12 @@ func run(in io.Reader, out io.Writer) error {
 			}
 			return nil
 		}
+
+		// Exit command is valid
 		line = strings.TrimSuffix(line, "\n")
+		if line == "exit" {
+			os.Exit(0)
+		}
 		fmt.Fprintf(out, "%v: command not found\n", line)
 	}
 }
