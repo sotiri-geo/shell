@@ -13,7 +13,8 @@ import (
 func run(in io.Reader, out io.Writer) error {
 	reader := bufio.NewReader(in)
 	for {
-		fmt.Print("$ ")
+		// Routes the prompt through the out (writer)
+		fmt.Fprint(out, "$ ")
 
 		// Will block until user enters input and presses enter
 		line, err := reader.ReadString('\n')
@@ -22,14 +23,18 @@ func run(in io.Reader, out io.Writer) error {
 			fmt.Fprintf(out, "reading input: %s", err)
 			return err
 		}
+
+		// We have text to write to writer
 		if err == io.EOF {
-			// Reached end of file and need to pipe out rest
-			fmt.Fprintf(out, "%v: command not found\n", line)
+			// Some text was recieved before reaching delim so we can send this to writer
+			if len(line) > 0 {
+				line = strings.TrimSuffix(line, "\n")
+
+				fmt.Fprintf(out, "%v: command not found\n", line)
+			}
+			return nil
 		}
-
-		// We need to strip the end of line so output command is written to stdout on a single line
 		line = strings.TrimSuffix(line, "\n")
-
 		fmt.Fprintf(out, "%v: command not found\n", line)
 	}
 }
