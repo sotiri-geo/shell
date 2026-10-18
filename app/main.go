@@ -14,7 +14,6 @@ import (
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	// Separate command to args to validate downstream
 	command, args, _ := strings.Cut(line, " ")
-	command = strings.TrimSpace(command)
 
 	switch command {
 	case "exit":
@@ -47,6 +46,7 @@ func run(in io.Reader, out io.Writer) error {
 			return nil
 		}
 
+		line = strings.TrimSpace(line)
 		shouldExit, execErr := execute(line, out)
 		if execErr != nil {
 			return execErr

@@ -65,6 +65,10 @@ func TestEchoCommand(t *testing.T) {
 			input: "echo\n",
 			want:  "$ \n$ ",
 		},
+		"WithWhitespaceBefore": {
+			input: " echo Hello World\n",
+			want:  "$ Hello World\n$ ",
+		},
 	}
 
 	for name, tc := range testCases {
