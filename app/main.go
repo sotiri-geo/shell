@@ -8,6 +8,25 @@ import (
 	"strings"
 )
 
+// execute accepts the unparsed user input text and routes to the requested command.
+// It returns to the caller a shouldExit boolean which is true if
+// the exit command was requested and any errors when writing output to writer.
+func execute(line string, out io.Writer) (shouldExit bool, err error) {
+	// Separate command to args to validate downstream
+	command, args, _ := strings.Cut(line, " ")
+	command = strings.TrimSpace(command)
+
+	switch command {
+	case "exit":
+		return true, nil
+	case "echo":
+		_, err = fmt.Fprintln(out, strings.TrimSpace(args))
+	default:
+		_, err = fmt.Fprintf(out, "%v: command not found\n", strings.TrimSpace(line))
+	}
+	return false, err
+}
+
 // run will read from in and write to out. We accept both the io.Reader and io.Writer interfaces
 // for this as it means the dependecy injection allows swapping values making testing easier.
 func run(in io.Reader, out io.Writer) error {
@@ -23,34 +42,27 @@ func run(in io.Reader, out io.Writer) error {
 			fmt.Fprintf(out, "reading input: %s", err)
 			return err
 		}
-
-		// We have text to write to writer
-		if err == io.EOF {
-			// Some text was recieved before reaching delim so we can send this to writer
-			if len(line) > 0 {
-				line = strings.TrimSuffix(line, "\n")
-
-				fmt.Fprintf(out, "%v: command not found\n", line)
-			}
+		// Early return if we reach EOF and no more bytes to read
+		if err == io.EOF && len(line) == 0 {
 			return nil
 		}
 
-		// Exit command is valid
-		line = strings.TrimSuffix(line, "\n")
-		if line == "exit" {
-			os.Exit(0)
+		shouldExit, execErr := execute(line, out)
+		if execErr != nil {
+			return execErr
 		}
-		// Echo command is valid
-		if args, exists := strings.CutPrefix(line, "echo"); exists {
-			fmt.Fprintln(out, strings.TrimSpace(args))
-			// return nil
-		} else {
-			fmt.Fprintf(out, "%v: command not found\n", line)
+
+		if shouldExit || err == io.EOF {
+			return nil
 		}
 	}
 }
 
 func main() {
 	// We need to create the loop phase of this execution
-	run(os.Stdin, os.Stdout)
+	if err := run(os.Stdin, os.Stdout); err != nil {
+		fmt.Fprintf(os.Stderr, "running shell program: %v", err)
+		// Exit with non-zero status code to indicate failure
+		os.Exit(1)
+	}
 }

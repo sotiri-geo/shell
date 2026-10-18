@@ -2,28 +2,9 @@ package main
 
 import (
 	"bytes"
-	"io"
 	"strings"
 	"testing"
 )
-
-func TestRun(t *testing.T) {
-	t.Run("WithSingleUnknownCommand", func(t *testing.T) {
-		input := strings.NewReader("banana\n")
-		var output bytes.Buffer
-
-		err := run(input, &output)
-		if err != nil && err != io.EOF {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		want := "$ banana: command not found\n$ "
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
-}
 
 func TestUnknownCommand(t *testing.T) {
 	testCases := map[string]struct {
@@ -54,6 +35,20 @@ func TestUnknownCommand(t *testing.T) {
 				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestRunExit(t *testing.T) {
+	input := strings.NewReader("exit\necho should-not-run\n")
+	var output bytes.Buffer
+
+	if err := run(input, &output); err != nil {
+		t.Fatalf("expected successful exit, got: %v", err)
+	}
+
+	// Only the initial prompt should be printed; input after exit must not run.
+	if got, want := output.String(), "$ "; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 

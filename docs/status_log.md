@@ -49,3 +49,11 @@ Note: Remember that we need to maintain the prompt on a loop, so echo commands w
 
 * Implement the echo builtin command with non empty args
 
+### Refactor
+
+* When the setup, execution and assertions are the same, but the only thing thats different is the input/output, convert to table tests.
+* The run() helper is where the responsibilities are accumulating.
+* Keep the run() function managing the REPL loop and have a separate execute() func that manages the switching between different commands.
+* Have main() just managing the IO i.e. stdin and stdout
+* A useful reference here is to separate the loops lifecycle in run() to the individual command behaviour. This gives smaller pieces to understand and test. The latter can be managed in a separate helper.
+* Handling io.EOF in two ways: if it returns this err with line length of zero, means we have nothing left to read, so early return to caller. Also, we may end up with a situation where the reader returns io.EOF with some text read prior, which will need to be written to out. Then execute() gets called.
