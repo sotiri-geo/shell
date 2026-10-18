@@ -43,6 +43,8 @@ echo is /bin/echo
 * The echo builtin command writes its args to stdout followed by a new line. If no args sent by user, it just writes a new line `\n`.
 * See here for full description https://pubs.opengroup.org/onlinepubs/9699919799/utilities/echo.html
 
+Note: Remember that we need to maintain the prompt on a loop, so echo commands when successful executed cannot exit the program.
+
 ### Completed
 
 * Implement the echo builtin command with non empty args

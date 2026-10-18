@@ -103,7 +103,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("should not fail: %v", err)
 		}
 
-		want := "$ \n"
+		want := "$ \n$ "
 
 		if got := output.String(); got != want {
 			t.Errorf("got %q, want %q", got, want)
