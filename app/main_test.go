@@ -84,7 +84,7 @@ func TestRun(t *testing.T) {
 		// so well either need to just include the prompt "$ " or transform before
 		// we assert. Well just go with the former and include the prompt string.
 
-		want := "$ Hello World\n"
+		want := "$ Hello World\n$ "
 
 		if got := output.String(); got != want {
 			t.Errorf("got %q, want %q", got, want)
