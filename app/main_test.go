@@ -70,7 +70,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("WithEchoCommand", func(t *testing.T) {
+	t.Run("WithEchoCommandAndArgs", func(t *testing.T) {
 		// Must print to stdout
 		// but for testing just write to writer
 		input := strings.NewReader("echo Hello World\n")
@@ -85,6 +85,25 @@ func TestRun(t *testing.T) {
 		// we assert. Well just go with the former and include the prompt string.
 
 		want := "$ Hello World\n"
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("WithEchoCommandAndEmptyArg", func(t *testing.T) {
+		// Tests that running echo with an empty arg, writes just a new line to
+		// the writer.
+
+		input := strings.NewReader("echo\n")
+		var output bytes.Buffer
+
+		err := run(input, &output)
+		if err != nil {
+			t.Fatalf("should not fail: %v", err)
+		}
+
+		want := "$ \n"
 
 		if got := output.String(); got != want {
 			t.Errorf("got %q, want %q", got, want)

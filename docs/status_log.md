@@ -45,5 +45,5 @@ echo is /bin/echo
 
 ### Completed
 
-* Implement the echo builtin command
+* Implement the echo builtin command with non empty args
 

@@ -43,13 +43,10 @@ func run(in io.Reader, out io.Writer) error {
 		// Echo command is valid
 		if args, exists := strings.CutPrefix(line, "echo"); exists {
 			fmt.Fprintln(out, strings.TrimSpace(args))
-			return nil
+			// return nil
+		} else {
+			fmt.Fprintf(out, "%v: command not found\n", line)
 		}
-		// args, exists := strings.CutPrefix(line, "echo")
-		//
-		// fmt.Printf("found args=%q with bool %v", args, exists)
-
-		fmt.Fprintf(out, "%v: command not found\n", line)
 	}
 }
 
