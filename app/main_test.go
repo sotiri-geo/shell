@@ -69,44 +69,36 @@ func TestRun(t *testing.T) {
 			t.Errorf("got output %q, want %q", got, "$ ")
 		}
 	})
+}
 
-	t.Run("WithEchoCommandAndArgs", func(t *testing.T) {
-		// Must print to stdout
-		// but for testing just write to writer
-		input := strings.NewReader("echo Hello World\n")
-		var output bytes.Buffer
+func TestEchoCommand(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  string
+	}{
+		"WithArgs": {
+			input: "echo Hello World\n",
+			want:  "$ Hello World\n$ ",
+		},
+		"WithoutArgs": {
+			input: "echo\n",
+			want:  "$ \n$ ",
+		},
+	}
 
-		err := run(input, &output)
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-		// In tests we need to consider that we write the prompt to the writer
-		// so well either need to just include the prompt "$ " or transform before
-		// we assert. Well just go with the former and include the prompt string.
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
 
-		want := "$ Hello World\n$ "
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
-
-	t.Run("WithEchoCommandAndEmptyArg", func(t *testing.T) {
-		// Tests that running echo with an empty arg, writes just a new line to
-		// the writer.
-
-		input := strings.NewReader("echo\n")
-		var output bytes.Buffer
-
-		err := run(input, &output)
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-
-		want := "$ \n$ "
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
+			// WHEN executing run
+			err := run(strings.NewReader(tc.input), &output)
+			// THEN no errors AND expected output is written
+			if err != nil {
+				t.Fatalf("should not fail: %v", err)
+			}
+			if got := output.String(); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
 }
