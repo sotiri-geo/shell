@@ -40,6 +40,15 @@ func run(in io.Reader, out io.Writer) error {
 		if line == "exit" {
 			os.Exit(0)
 		}
+		// Echo command is valid
+		if args, exists := strings.CutPrefix(line, "echo"); exists {
+			fmt.Fprintln(out, strings.TrimSpace(args))
+			return nil
+		}
+		// args, exists := strings.CutPrefix(line, "echo")
+		//
+		// fmt.Printf("found args=%q with bool %v", args, exists)
+
 		fmt.Fprintf(out, "%v: command not found\n", line)
 	}
 }

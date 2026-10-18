@@ -69,4 +69,25 @@ func TestRun(t *testing.T) {
 			t.Errorf("got output %q, want %q", got, "$ ")
 		}
 	})
+
+	t.Run("WithEchoCommand", func(t *testing.T) {
+		// Must print to stdout
+		// but for testing just write to writer
+		input := strings.NewReader("echo Hello World\n")
+		var output bytes.Buffer
+
+		err := run(input, &output)
+		if err != nil {
+			t.Fatalf("should not fail: %v", err)
+		}
+		// In tests we need to consider that we write the prompt to the writer
+		// so well either need to just include the prompt "$ " or transform before
+		// we assert. Well just go with the former and include the prompt string.
+
+		want := "$ Hello World\n"
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
