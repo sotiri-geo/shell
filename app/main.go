@@ -27,11 +27,10 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 		_, err = fmt.Fprintln(out, strings.TrimSpace(args))
 	case "type":
 		args = strings.TrimSpace(args)
-		if builtinTypes[args] {
-			_, err = fmt.Fprintf(out, "%s is a shell builtin\n", args)
-		} else {
-			// We need to split each arg and handle separately
-			for arg := range strings.SplitSeq(args, " ") {
+		for arg := range strings.SplitSeq(args, " ") {
+			if builtinTypes[arg] {
+				_, err = fmt.Fprintf(out, "%s is a shell builtin\n", arg)
+			} else {
 				_, err = fmt.Fprintf(out, "%s: not found\n", arg)
 			}
 		}

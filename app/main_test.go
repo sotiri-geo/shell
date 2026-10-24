@@ -199,3 +199,33 @@ func TestTypeNotFound(t *testing.T) {
 		})
 	}
 }
+
+func TestTypeMixInput(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  string
+	}{
+		"WithKnownAndUnknownCommand": {
+			input: "type echo banana\n",
+			want:  "$ echo is a shell builtin\nbanana: not found\n$ ",
+		},
+		"WithUnKnownAndKnownCommand": {
+			input: "type banana echo\n",
+			want:  "$ banana: not found\necho is a shell builtin\n$ ",
+		},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+
+			err := run(strings.NewReader(tc.input), &output)
+			if err != nil {
+				t.Fatalf("should not fail: %v", err)
+			}
+
+			if got := output.String(); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
