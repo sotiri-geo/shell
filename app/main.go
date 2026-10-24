@@ -32,7 +32,9 @@ func run(in io.Reader, out io.Writer) error {
 	reader := bufio.NewReader(in)
 	for {
 		// Routes the prompt through the out (writer)
-		fmt.Fprint(out, "$ ")
+		if _, err := fmt.Fprint(out, "$ "); err != nil {
+			fmt.Fprintf(out, "prompt error: %v", err)
+		}
 
 		// Will block until user enters input and presses enter
 		line, err := reader.ReadString('\n')
@@ -46,7 +48,13 @@ func run(in io.Reader, out io.Writer) error {
 			return nil
 		}
 
+		// This is reached when there is text to be printed regardless
+		// of if we recieved an io.EOF
 		line = strings.TrimSpace(line)
+		// When nothing is parsed it should continue for another prompt
+		if len(line) == 0 {
+			continue
+		}
 		shouldExit, execErr := execute(line, out)
 		if execErr != nil {
 			return execErr

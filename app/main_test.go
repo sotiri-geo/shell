@@ -38,6 +38,36 @@ func TestUnknownCommand(t *testing.T) {
 	}
 }
 
+func TestEmptyCommandIsIgnored(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  string
+	}{
+		"WithEmptyString": {
+			input: "",
+			want:  "$ ",
+		},
+		"WithNewLine": {
+			input: "\n",
+			want:  "$ $ ",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+			err := run(strings.NewReader(tc.input), &output)
+			if err != nil {
+				t.Fatalf("should not fail: %v", err)
+			}
+
+			if got := output.String(); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestRunExit(t *testing.T) {
 	input := strings.NewReader("exit\necho should-not-run\n")
 	var output bytes.Buffer
@@ -68,6 +98,10 @@ func TestEchoCommand(t *testing.T) {
 		"WithWhitespaceBefore": {
 			input: " echo Hello World\n",
 			want:  "$ Hello World\n$ ",
+		},
+		"WithoutNewline": {
+			input: "echo Hello World",
+			want:  "$ Hello World\n",
 		},
 	}
 
