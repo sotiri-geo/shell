@@ -57,3 +57,8 @@ Note: Remember that we need to maintain the prompt on a loop, so echo commands w
 * Have main() just managing the IO i.e. stdin and stdout
 * A useful reference here is to separate the loops lifecycle in run() to the individual command behaviour. This gives smaller pieces to understand and test. The latter can be managed in a separate helper.
 * Handling io.EOF in two ways: if it returns this err with line length of zero, means we have nothing left to read, so early return to caller. Also, we may end up with a situation where the reader returns io.EOF with some text read prior, which will need to be written to out. Then execute() gets called.
+* Handle empty command, should loop back and allow the user to type another command
+
+## 24-10-26
+
+
