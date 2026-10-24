@@ -12,28 +12,15 @@ import (
 // It returns to the caller a shouldExit boolean which is true if
 // the exit command was requested and any errors when writing output to writer.
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
-	builtinTypes := map[string]bool{
-		"echo": true,
-		"exit": true,
-		"type": true,
-	}
-	// Separate command to args to validate downstream
 	command, args, _ := strings.Cut(line, " ")
 
 	switch command {
 	case "exit":
 		return true, nil
 	case "echo":
-		_, err = fmt.Fprintln(out, strings.TrimSpace(args))
+		err = handleEcho(args, out)
 	case "type":
-		args = strings.TrimSpace(args)
-		for arg := range strings.SplitSeq(args, " ") {
-			if builtinTypes[arg] {
-				_, err = fmt.Fprintf(out, "%s is a shell builtin\n", arg)
-			} else {
-				_, err = fmt.Fprintf(out, "%s: not found\n", arg)
-			}
-		}
+		err = handleType(args, out)
 	default:
 		_, err = fmt.Fprintf(out, "%v: command not found\n", strings.TrimSpace(command))
 	}

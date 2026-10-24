@@ -88,4 +88,5 @@ $
 
 ## TODO
 
-* Refactor out commands to seperate helpers for single responsibilities
+* Duplication exists: command names between the switch statement in `execute` and the handler `handleType` have both got references to builtin. Decide how to sync the two. Maybe use a map to iterate and have that source centralised as a constant.
+* Add tests for builtin handlers like `echo`, `type` that will focus on command behaviour. Keep existing run tests as the integration test, checking loop behaviour.
