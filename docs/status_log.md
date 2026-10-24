@@ -61,4 +61,31 @@ Note: Remember that we need to maintain the prompt on a loop, so echo commands w
 
 ## 24-10-26
 
+## Context
 
+Ref: https://app.codecrafters.io/courses/shell/stages/ez5
+
+We are required to implement the `type` command in our interpreter.
+
+docs: https://pubs.opengroup.org/onlinepubs/9799919799/utilities/type.html
+
+definition: The type utility shall indicate how each argument would be interpreted if used as a command name. Typically identifies the operand as either shell builtin, function, alias, or keyword, and where applicable, display its pathname.
+
+## Example 
+
+For builtin commands (like echo, exit, and type), print <command> is a shell builtin.
+For unrecognized commands that don't match any builtin, print <command>: not found.
+
+$ type echo
+echo is a shell builtin
+$ type exit
+exit is a shell builtin
+$ type type
+type is a shell builtin
+$ type invalid_command
+invalid_command: not found
+$
+
+## TODO
+
+* Refactor out commands to seperate helpers for single responsibilities
