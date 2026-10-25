@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -114,6 +115,33 @@ func TestFindExecutable(t *testing.T) {
 		}
 
 		t.Setenv("PATH", dir)
+		// WHEN calling findExecutable with e1 and PATH
+		got, found := findExecutable("mytool", "PATH")
+		// THEN we return the full path and found as true
+		if !found {
+			t.Fatal("executable mytool should exist")
+		}
+		if got != executable {
+			t.Errorf("got %q, want %q", got, executable)
+		}
+	})
+
+	t.Run("InSecondDir", func(t *testing.T) {
+		// GIVEN a directory d1 located second in path with executable e1
+		// e.g. "file/to/path1:d1"
+		dirDummy := t.TempDir()
+		dir := t.TempDir()
+		path := strings.Join([]string{dirDummy, dir}, ":")
+		executable := filepath.Join(dir, "mytool")
+		if err := os.WriteFile(
+			executable,
+			[]byte("#!/bin/sh\nexit 0\n"),
+			PermExecutable,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		t.Setenv("PATH", path)
 		// WHEN calling findExecutable with e1 and PATH
 		got, found := findExecutable("mytool", "PATH")
 		// THEN we return the full path and found as true

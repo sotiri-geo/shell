@@ -46,17 +46,20 @@ func handleType(args string, out io.Writer) error {
 	return err
 }
 
-// findExecutable returns the first dir in PATH of the requested executable
-func findExecutable(name, pathEnv string) (path string, found bool) {
-	dir := os.Getenv(pathEnv)
+// findExecutable returns the first executale directory in PATH of the requested executable
+func findExecutable(name, pathEnv string) (execDir string, found bool) {
+	path := os.Getenv(pathEnv)
 
-	execPath := filepath.Join(dir, name)
-	// check existance and then call stats
-	fi, err := os.Stat(execPath)
+	// Order matters, we return the first found executable path
+	for _, dir := range filepath.SplitList(path) {
+		execPath := filepath.Join(dir, name)
+		// check existance and then call stats
+		fi, err := os.Stat(execPath)
 
-	// We only care about file existing being executable
-	if err == nil && fi.Mode().Perm() == PermExecutable {
-		return execPath, true
+		// We only care about file existing being executable
+		if err == nil && fi.Mode().Perm() == PermExecutable {
+			return execPath, true
+		}
 	}
 
 	return "", false
