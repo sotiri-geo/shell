@@ -86,7 +86,9 @@ $ type invalid_command
 invalid_command: not found
 $
 
-## TODO
+## Completed
 
+* Implemented type command
+* Extacted command handlers out into separate file builtin, but kept under the same package main importing and testing under same build.
 * Duplication exists: command names between the switch statement in `execute` and the handler `handleType` have both got references to builtin. Decide how to sync the two. Maybe use a map to iterate and have that source centralised as a constant.
 * Add tests for builtin handlers like `echo`, `type` that will focus on command behaviour. Keep existing run tests as the integration test, checking loop behaviour.
