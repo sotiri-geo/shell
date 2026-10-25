@@ -103,3 +103,33 @@ func TestTypeFindsExecutable(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+func TestFindExecutable(t *testing.T) {
+	t.Run("InFirstDir", func(t *testing.T) {
+		// GIVEN the first directory d1 in path containing executable e1
+		dir := t.TempDir()
+		executable := filepath.Join(dir, "mytool")
+		if err := os.WriteFile(
+			executable,
+			[]byte("#!/bin/sh\nexit 0\n"),
+			0o600,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		if err := os.Chmod(executable, 0o755); err != nil {
+			t.Fatalf("set executable permissions: %v", err)
+		}
+
+		t.Setenv("PATH", dir)
+		// WHEN calling findExecutable with e1 and PATH
+		got, found := findExecutable("mytool", "PATH")
+		// THEN we return the full path and found as true
+		if !found {
+			t.Fatal("executable mytool should exist")
+		}
+		if got != executable {
+			t.Errorf("got %q, want %q", got, executable)
+		}
+	})
+}

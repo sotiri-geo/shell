@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -34,26 +33,28 @@ func handleType(args string, out io.Writer) error {
 			}
 		} else {
 			// This needs expanding to search across dir's listed in PATH
-			// Fetch path
-			dir := os.Getenv("PATH")
-
-			executable := filepath.Join(dir, arg)
-			// check existance and then call stats
-			fi, err := os.Stat(executable)
-			if errors.Is(err, os.ErrNotExist) {
-				fmt.Fprintf(out, "%s: not found\n", arg)
-				continue
-			}
-			if err != nil {
-				return fmt.Errorf("reading file stats: %w", err)
-			}
-			// Executable file
-			if fi.Mode().Perm() == 0o755 {
-				_, err = fmt.Fprintf(out, "%s is %s\n", arg, executable)
+			path, found := findExecutable(arg, "PATH")
+			if found {
+				_, err = fmt.Fprintf(out, "%s is %s\n", arg, path)
 				return err
-
 			}
+			fmt.Fprintf(out, "%s: not found\n", arg)
 		}
 	}
 	return err
+}
+
+func findExecutable(name, pathEnv string) (path string, found bool) {
+	dir := os.Getenv(pathEnv)
+
+	execPath := filepath.Join(dir, name)
+	// check existance and then call stats
+	fi, err := os.Stat(execPath)
+
+	// We only care about file existing being executable
+	if err == nil && fi.Mode().Perm() == 0o755 {
+		return execPath, true
+	}
+
+	return "", false
 }
