@@ -80,13 +80,9 @@ func TestTypeFindsExecutable(t *testing.T) {
 	if err := os.WriteFile(
 		executable,
 		[]byte("#!/bin/sh\nexit 0\n"),
-		0o600,
+		PermExecutable,
 	); err != nil {
 		t.Fatalf("create executable fixture: %v", err)
-	}
-
-	if err := os.Chmod(executable, 0o755); err != nil {
-		t.Fatalf("set executable permissions: %v", err)
 	}
 
 	t.Setenv("PATH", dir)
@@ -112,13 +108,9 @@ func TestFindExecutable(t *testing.T) {
 		if err := os.WriteFile(
 			executable,
 			[]byte("#!/bin/sh\nexit 0\n"),
-			0o600,
+			PermExecutable,
 		); err != nil {
 			t.Fatalf("create executable fixture: %v", err)
-		}
-
-		if err := os.Chmod(executable, 0o755); err != nil {
-			t.Fatalf("set executable permissions: %v", err)
 		}
 
 		t.Setenv("PATH", dir)
