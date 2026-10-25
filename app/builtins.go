@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const PermExecutable = 0o755
+
 // handleEcho will write args directly to out
 func handleEcho(args string, out io.Writer) error {
 	// Using Fprintf for consistency so its obvious when printing a new line
@@ -44,6 +46,7 @@ func handleType(args string, out io.Writer) error {
 	return err
 }
 
+// findExecutable returns the first dir in PATH of the requested executable
 func findExecutable(name, pathEnv string) (path string, found bool) {
 	dir := os.Getenv(pathEnv)
 
@@ -52,7 +55,7 @@ func findExecutable(name, pathEnv string) (path string, found bool) {
 	fi, err := os.Stat(execPath)
 
 	// We only care about file existing being executable
-	if err == nil && fi.Mode().Perm() == 0o755 {
+	if err == nil && fi.Mode().Perm() == PermExecutable {
 		return execPath, true
 	}
 
