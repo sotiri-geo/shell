@@ -120,8 +120,6 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#index-PATH
 
 ## Completed
 
-## TODO 
-
 We are required to extend the type command such that:
 
 * When we encounter builtin command, report it as builtin (<commad> is a shell builtin) and stop.
@@ -140,7 +138,7 @@ $ type echo
 echo is a shell builtin
 
 1. Small contract:
-   - Builtins take precedence over executables in PATH.
+   - Builtins take precedence over executables in PATH. - Done
    - Search directories in their listed order.
    - Return the first matching executable file.
    - Skip unsuitable candidates and continue searching.
