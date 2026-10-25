@@ -8,7 +8,10 @@ import (
 	"strings"
 )
 
-const PermExecutable = 0o755
+const (
+	PermExecutable = 0o755
+	PermReadWrite  = 0o666
+)
 
 // handleEcho will write args directly to out
 func handleEcho(args string, out io.Writer) error {

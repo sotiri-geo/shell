@@ -102,54 +102,169 @@ func TestTypeFindsExecutable(t *testing.T) {
 }
 
 func TestFindExecutable(t *testing.T) {
-	t.Run("InFirstDir", func(t *testing.T) {
-		// GIVEN the first directory d1 in path containing executable e1
-		dir := t.TempDir()
-		executable := filepath.Join(dir, "mytool")
-		if err := os.WriteFile(
-			executable,
-			[]byte("#!/bin/sh\nexit 0\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
+	testCases := map[string]struct {
+		fileName         string
+		executableExists bool
+		setup            func() string
+	}{
+		"InFirstDirectory": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN the first directory d1 in path containing executable e1
+				dir := t.TempDir()
+				executable := filepath.Join(dir, "mytool")
+				if err := os.WriteFile(
+					executable,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
 
-		t.Setenv("PATH", dir)
-		// WHEN calling findExecutable with e1 and PATH
-		got, found := findExecutable("mytool", "PATH")
-		// THEN we return the full path and found as true
-		if !found {
-			t.Fatal("executable mytool should exist")
-		}
-		if got != executable {
-			t.Errorf("got %q, want %q", got, executable)
-		}
-	})
+				t.Setenv("PATH", dir)
+				return executable
+			},
+		},
+		"InSecondDirectory": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN a directory d1 located second in path with executable e1
+				// e.g. "file/to/path1:d1"
+				dirDummy := t.TempDir()
+				dir := t.TempDir()
+				path := strings.Join([]string{dirDummy, dir}, ":")
+				executable := filepath.Join(dir, "mytool")
+				if err := os.WriteFile(
+					executable,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
 
-	t.Run("InSecondDir", func(t *testing.T) {
-		// GIVEN a directory d1 located second in path with executable e1
-		// e.g. "file/to/path1:d1"
-		dirDummy := t.TempDir()
-		dir := t.TempDir()
-		path := strings.Join([]string{dirDummy, dir}, ":")
-		executable := filepath.Join(dir, "mytool")
-		if err := os.WriteFile(
-			executable,
-			[]byte("#!/bin/sh\nexit 0\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
+				t.Setenv("PATH", path)
+				return executable
+			},
+		},
+		// This verifies when we have two files named the same
+		// under two different directories in PATH, we return the
+		// first one that is executable
+		"WithSameFilenameOnlyOneExecutable": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN a directory d1 with filename f1 with non-exec permissions
+				// GIVEN a directory d2 with filename f1 with exec permissions
+				// GIVEN an env PATH d1:d2
+				d1 := t.TempDir()
+				d2 := t.TempDir()
+				p1 := filepath.Join(d1, "mytool")
+				p2 := filepath.Join(d2, "mytool")
+				if err := os.WriteFile(
+					p1,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermReadWrite,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+				if err := os.WriteFile(
+					p2,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
 
-		t.Setenv("PATH", path)
-		// WHEN calling findExecutable with e1 and PATH
-		got, found := findExecutable("mytool", "PATH")
-		// THEN we return the full path and found as true
-		if !found {
-			t.Fatal("executable mytool should exist")
-		}
-		if got != executable {
-			t.Errorf("got %q, want %q", got, executable)
-		}
-	})
+				t.Setenv("PATH", strings.Join([]string{d1, d2}, ":"))
+				return p2
+			},
+		},
+		// This tests we return first executable when there are multiple
+		// under different directories in PATH
+		"WithMultilpeDirSameExecutable": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN a directory d1 with filename f1 with non-exec permissions
+				// GIVEN a directory d2 with filename f2 with exec permissions
+				// GIVEN a directory d3 with filename f2 with exec permissions
+				// GIVEN an env PATH d1:d2:d3
+				d1 := t.TempDir()
+				d2 := t.TempDir()
+				d3 := t.TempDir()
+				p1 := filepath.Join(d1, "badTool")
+				p2 := filepath.Join(d2, "mytool")
+				p3 := filepath.Join(d3, "mytool")
+				if err := os.WriteFile(
+					p1,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermReadWrite,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+				if err := os.WriteFile(
+					p2,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+				if err := os.WriteFile(
+					p3,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+
+				t.Setenv("PATH", strings.Join([]string{d1, d2, d3}, ":"))
+				return p2
+			},
+		},
+		"WithNoExecutableFiles": {
+			fileName:         "invalid_command",
+			executableExists: false,
+			setup: func() string {
+				// GIVEN a directory d1 with filename f1 with non-exec permissions
+				d1 := t.TempDir()
+				p1 := filepath.Join(d1, "invalid_command")
+				if err := os.WriteFile(
+					p1,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermReadWrite,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+				t.Setenv("PATH", p1)
+				return p1
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			executableDir := tc.setup()
+			// WHEN calling findExecutable with executable name and PATH
+			got, found := findExecutable(tc.fileName, "PATH")
+			// THEN we return the found executable path (if exists)
+			if tc.executableExists {
+				if !found {
+					t.Fatalf("executable %s should exist", tc.fileName)
+				}
+
+				if got != executableDir {
+					t.Errorf("got %q, want %q", got, executableDir)
+				}
+			} else {
+				if found {
+					t.Fatalf("should not find executable: %s", tc.fileName)
+				}
+				if got != "" {
+					t.Errorf("got path: %q", got)
+				}
+			}
+		})
+	}
 }
