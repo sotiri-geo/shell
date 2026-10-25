@@ -143,3 +143,8 @@ echo is a shell builtin
    - Return the first matching executable file.
    - Skip unsuitable candidates and continue searching.
    - When nothing matches, print the existing “not found” response and continue the shell.
+
+
+## Refactor (optional)
+
+* Add test coverage for user calling type on a executable command through run() in main_test.go
