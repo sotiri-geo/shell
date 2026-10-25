@@ -92,3 +92,56 @@ $
 * Extacted command handlers out into separate file builtin, but kept under the same package main importing and testing under same build.
 * Duplication exists: command names between the switch statement in `execute` and the handler `handleType` have both got references to builtin. Decide how to sync the two. Maybe use a map to iterate and have that source centralised as a constant.
 * Add tests for builtin handlers like `echo`, `type` that will focus on command behaviour. Keep existing run tests as the integration test, checking loop behaviour.
+
+
+## 25-10-26
+
+## Context
+
+We need to extend the interpreter to use the environment variable `PATH`, which contains a list of directories to search for executable programs. Normally what happens, when a user enters a command that is not a builtin command, a shell searches the directories in `PATH` for an executable file with that name.
+
+## Example of what PATH prints to stdout
+
+# Print the PATH variable
+$ echo $PATH
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+
+Note: directory paths are separated with colon `:`.
+
+A Shell will search through the paths defined from left to right (ordering is important). It will stop at the first directory that it discovers the named executable the user requests. When a shell exhausts every directory path and cannot find the executable command, then the following error is returned:
+
+$ myprogram
+bash: myprogram: command not found
+
+Usually indicating to the user that the binary isn't installed or is in a directory not included in `PATH` variable.
+
+GNU docs: https://www.gnu.org/software/bash/manual/bash.html#index-PATH
+
+## Completed
+
+## TODO 
+
+We are required to extend the type command such that:
+
+* When we encounter builtin command, report it as builtin (<commad> is a shell builtin) and stop.
+* If the command is not a builtin, the shell should go through every directory in `PATH`:
+  * Check if a file with the command name exists
+  * Check if the file has execute permissions 
+  * If the file exists and has execute permissions, print <command> is <full_path> and stop
+  * If the file exists but lacks execute permissions, skip it and continue to the next directory
+  * If no executable is found in any directory for the given command name, then print <command>: not found
+
+$ type grep
+grep is /usr/bin/grep
+$ type invalid_command
+invalid_command: not found
+$ type echo
+echo is a shell builtin
+
+1. Small contract:
+   - Builtins take precedence over executables in PATH.
+   - Search directories in their listed order.
+   - Return the first matching executable file.
+   - Skip unsuitable candidates and continue searching.
+   - When nothing matches, print the existing “not found” response and continue the shell.

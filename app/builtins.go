@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -30,9 +33,25 @@ func handleType(args string, out io.Writer) error {
 				return err
 			}
 		} else {
-			_, err = fmt.Fprintf(out, "%s: not found\n", arg)
+			// This needs expanding to search across dir's listed in PATH
+			// Fetch path
+			dir := os.Getenv("PATH")
+
+			executable := filepath.Join(dir, arg)
+			// check existance and then call stats
+			fi, err := os.Stat(executable)
+			if errors.Is(err, os.ErrNotExist) {
+				fmt.Fprintf(out, "%s: not found\n", arg)
+				continue
+			}
 			if err != nil {
+				return fmt.Errorf("reading file stats: %w", err)
+			}
+			// Executable file
+			if fi.Mode().Perm() == 0o755 {
+				_, err = fmt.Fprintf(out, "%s is %s\n", arg, executable)
 				return err
+
 			}
 		}
 	}
