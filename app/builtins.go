@@ -8,7 +8,8 @@ import (
 
 // handleEcho will write args directly to out
 func handleEcho(args string, out io.Writer) error {
-	_, err := fmt.Fprintln(out, strings.TrimSpace(args))
+	// Using Fprintf for consistency so its obvious when printing a new line
+	_, err := fmt.Fprintf(out, "%s\n", strings.TrimSpace(args))
 	return err
 }
 
