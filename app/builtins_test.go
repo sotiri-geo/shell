@@ -55,6 +55,10 @@ func TestType(t *testing.T) {
 			input: "invalid_command echo",
 			want:  "invalid_command: not found\necho is a shell builtin\n",
 		},
+		"WithUnKnownAndUnknownCommand": {
+			input: "invalid_command banana",
+			want:  "invalid_command: not found\nbanana: not found\n",
+		},
 	}
 
 	for name, tc := range testCase {
@@ -237,7 +241,7 @@ func TestFindExecutable(t *testing.T) {
 				); err != nil {
 					t.Fatalf("create executable fixture: %v", err)
 				}
-				t.Setenv("PATH", p1)
+				t.Setenv("PATH", d1)
 				return p1
 			},
 		},

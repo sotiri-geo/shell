@@ -8,3 +8,16 @@ This contains any tips and tricks that I've learnt in order to handle issues mor
 * Write a small failing test on the boundary between the components. Keep distinction between the responsibilites
 * Add a small helper to make test path
 * Keep feedback loop short and get a single behaviour running as early as possible
+
+
+## Testing
+
+When refactoring tests after you've refactored code, be mindful that the boundary of existing tests may change. In relation to what
+we've done in this project:
+
+* Initially execute() contained the logic for routing so we tested how we handle `type` in there i.e. main_test.go
+* Then we extracted this logic into its own handler `handleType`
+* Tested this through builtins_test.go, for the builtin and external command paths
+* Now decided that the existing tests in main_test.go are no longer relevant to test the behaviour of the type handler through there
+* We should instead focus that the routing is done correctly, i.e. make sure the responsibilites are being tested:
+    * Does the user input reach the right handler with the right args

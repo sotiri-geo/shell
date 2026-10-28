@@ -148,3 +148,11 @@ echo is a shell builtin
 ## Refactor (optional)
 
 * Add test coverage for user calling type on a executable command through run() in main_test.go
+
+
+## 28-10-26
+
+## TODO
+
+* Refactor the tests found for run() and execute() in main_test.go to now test the responsibilities of the routing 
+* Remove any redundtant tests found already in the builtin_test.go
