@@ -138,7 +138,7 @@ $ type echo
 echo is a shell builtin
 
 1. Small contract:
-   - Builtins take precedence over executables in PATH. - Done
+   - Builtins take precedence over executables in PATH.
    - Search directories in their listed order.
    - Return the first matching executable file.
    - Skip unsuitable candidates and continue searching.
@@ -152,7 +152,32 @@ echo is a shell builtin
 
 ## 28-10-26
 
-## TODO
+## Completed
 
 * Refactor the tests found for run() and execute() in main_test.go to now test the responsibilities of the routing 
 * Remove any redundtant tests found already in the builtin_test.go
+* Added files external.go and external_test.go to extract helper to separate the responibility of running external command
+* Running end to end test through run() to prove behaviour works - I.e. Running external command
+
+## Context
+
+Next, we need to extend our project to handle running external programs. When a command isn't a builtin, the shell should:
+
+* Determine if a given command is executable
+* If so, execute the command
+* Pass any user args from the commandline to the program
+
+E.g. `custom_exec arg1 arg2` should eval: `custom_exec` check under `PATH` if its an executable. Then run this with `arg1`, `arg2`.
+
+Contract: 
+
+* If the first arg is an executable it should execute it with any subsequent user args
+* Skip if first arg is not an executable found in PATH
+
+## TODO
+
+* Add test to check when external command doesn't exist - fallback
+* Add a test to check external command exists but not on PATH - fallback
+* Add a test to check multiple args are accepted with helper - Do implementation with TDD
+* Wire it up with the router in execute()
+

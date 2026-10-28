@@ -87,21 +87,6 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("ForExistingExternalCommand", func(t *testing.T) {
-		// GIVEN a writer and an external command mytool that always returns true
-		var output bytes.Buffer
-		want := "$ true"
-
-		// WHEN we call run with
-		err := run(strings.NewReader("mytool hello"), &output)
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
 	t.Run("ForExternalCommand", func(t *testing.T) {
 		// GIVEN a writer and an external executable command always_false that always returns false
 		dir := t.TempDir()

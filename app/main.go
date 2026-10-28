@@ -22,12 +22,7 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 		err = handleEcho(args, out)
 	case "type":
 		err = handleType(args, out)
-	// Boundary to introduce external commands
 	default:
-		if command == "mytool" {
-			fmt.Fprint(out, "true")
-			return false, err
-		}
 		// Check its an command found on PATH
 		if execPath, found := findExecutable(command, "PATH"); found {
 			cmd := exec.Command(execPath)
