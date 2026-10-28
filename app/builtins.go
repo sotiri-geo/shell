@@ -49,8 +49,10 @@ func handleType(args string, out io.Writer) error {
 	return err
 }
 
-// findExecutable returns the first executale directory in PATH of the requested executable
-func findExecutable(name, pathEnv string) (execDir string, found bool) {
+// findExecutable returns the first full executable path including its binary and if it exists.
+// For example if the first executable path of `mytool` in PATH is `file/to/bin` then
+// execPath would return file/to/bin/mytool
+func findExecutable(name, pathEnv string) (execPath string, found bool) {
 	path := os.Getenv(pathEnv)
 
 	// Order matters, we return the first found executable path

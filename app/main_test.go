@@ -2,13 +2,11 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
-
-// We need to test:
-// - Routing through run(): exit, echo, type, unknown, empty
-// - Multiple commands are paginated in output
 
 func TestRoutingCommand(t *testing.T) {
 	testCases := map[string]struct {
@@ -82,6 +80,49 @@ func TestRun(t *testing.T) {
 		err := run(strings.NewReader("type echo type"), &output)
 		if err != nil {
 			t.Fatalf("should not fail %v", err)
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("ForExistingExternalCommand", func(t *testing.T) {
+		// GIVEN a writer and an external command mytool that always returns true
+		var output bytes.Buffer
+		want := "$ true"
+
+		// WHEN we call run with
+		err := run(strings.NewReader("mytool hello"), &output)
+		if err != nil {
+			t.Fatalf("should not fail: %v", err)
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+	t.Run("ForExternalCommand", func(t *testing.T) {
+		// GIVEN a writer and an external executable command always_false that always returns false
+		dir := t.TempDir()
+		executable := filepath.Join(dir, "always_false")
+		if err := os.WriteFile(
+			executable,
+			[]byte("#!/bin/sh\necho false\n"),
+			PermExecutable,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		t.Setenv("PATH", dir)
+
+		var output bytes.Buffer
+		want := "$ false\n"
+
+		// WHEN we call run with
+		err := run(strings.NewReader("always_false hello"), &output)
+		if err != nil {
+			t.Fatalf("should not fail: %v", err)
 		}
 
 		if got := output.String(); got != want {
