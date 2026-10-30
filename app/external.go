@@ -6,9 +6,9 @@ import (
 	"os/exec"
 )
 
-func runCommand(name string, out io.Writer) (found bool, err error) {
+func runCommand(name string, out io.Writer, arg ...string) (found bool, err error) {
 	if execPath, found := findExecutable(name, "PATH"); found {
-		cmd := exec.Command(execPath)
+		cmd := exec.Command(execPath, arg...)
 		cmd.Stdout = out
 
 		if err = cmd.Run(); err != nil {

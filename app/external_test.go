@@ -12,7 +12,6 @@ func TestExternalCommand(t *testing.T) {
 		var output bytes.Buffer
 		want := "false\n"
 		command := "always_false"
-		// GIVEN always_false executable in path p1
 		dir := t.TempDir()
 		p1 := filepath.Join(dir, command)
 		if err := os.WriteFile(
@@ -67,7 +66,6 @@ func TestExternalCommand(t *testing.T) {
 			t.Fatalf("create executable fixture: %v", err)
 		}
 
-		// Path set with no executable
 		t.Setenv("PATH", dir2)
 
 		found, err := runCommand(command, &output)
@@ -78,6 +76,34 @@ func TestExternalCommand(t *testing.T) {
 			t.Errorf("should not exist: %v", command)
 		}
 	})
-	// Check when exists but not on path
-	// Check runs with multiple commands
+	t.Run("RunsWithMulpitleArgs", func(t *testing.T) {
+		var output bytes.Buffer
+		command := "mytool"
+		arg1, arg2 := "hello", "world"
+		want := "hello\nworld\n"
+		dir := t.TempDir()
+		p1 := filepath.Join(dir, command)
+		if err := os.WriteFile(
+			p1,
+			[]byte("#!/bin/sh\nfor arg in ${@};do\n printf '%s\n' ${arg}\n done\n"),
+			PermExecutable,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		t.Setenv("PATH", dir)
+
+		found, err := runCommand(command, &output, arg1, arg2)
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if !found {
+			t.Fatal("should exist")
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
