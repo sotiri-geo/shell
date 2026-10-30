@@ -49,19 +49,23 @@ func handleType(args string, out io.Writer) error {
 	return err
 }
 
-// findExecutable returns the first full executable path including its binary and if it exists.
+// findExecutable returns the first executable path for `name`.
 // For example if the first executable path of `mytool` in PATH is `file/to/bin` then
-// execPath would return file/to/bin/mytool
+// execPath would return file/to/bin/mytool. For relative path ".", we join the file separator
+// i.e. `./mytool`.
 func findExecutable(name, pathEnv string) (execPath string, found bool) {
 	path := os.Getenv(pathEnv)
 
-	// Order matters, we return the first found executable path
+	// Order matters, we return the first found executable path for name
 	for _, dir := range filepath.SplitList(path) {
 		execPath := filepath.Join(dir, name)
-		// check existance and then call stats
+		// Explictly constructing path for relative path as
+		// its not handled in filepath.Join
+		if dir == "." {
+			execPath = strings.Join([]string{dir, name}, "/")
+		}
 		fi, err := os.Stat(execPath)
 
-		// We only care about file existing being executable
 		if err == nil && fi.Mode().Perm() == PermExecutable {
 			return execPath, true
 		}

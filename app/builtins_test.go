@@ -77,7 +77,7 @@ func TestType(t *testing.T) {
 	}
 }
 
-func TestTypeFindsExecutable(t *testing.T) {
+func TestTypeReturnsExecutable(t *testing.T) {
 	// GIVEN a directory d1 on PATH with an executable mytool
 	dir := t.TempDir()
 	executable := filepath.Join(dir, "mytool")
@@ -270,5 +270,37 @@ func TestFindExecutable(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFindExecutableReturnsFileSeparatorWithRelativePath(t *testing.T) {
+	// GIVEN an executable in the current directory,
+	// with PATH containing a relative directory.
+	dir := t.TempDir()
+	t.Chdir(dir)
+	want := "./mytool"
+
+	const command = "mytool"
+
+	if err := os.WriteFile(
+		command,
+		[]byte("#!/bin/sh\nexit 0\n"),
+		PermExecutable,
+	); err != nil {
+		t.Fatalf("create executable fixture: %v", err)
+	}
+
+	t.Setenv("PATH", ".")
+
+	// WHEN finding the executable.
+	got, found := findExecutable(command, "PATH")
+
+	// THEN it is found and with "/" file separator attached
+	if !found {
+		t.Fatalf("should find command: %s", command)
+	}
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
