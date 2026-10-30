@@ -245,6 +245,46 @@ func TestFindExecutable(t *testing.T) {
 				return p1
 			},
 		},
+		"WithLeadingPathListSeparator": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN the first directory d1 in path containing executable e1
+				dir := t.TempDir()
+				executable := filepath.Join(dir, "mytool")
+				if err := os.WriteFile(
+					executable,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+
+				// GIVEN leading path list separator
+				t.Setenv("PATH", strings.Join([]string{"", dir}, ":"))
+				return executable
+			},
+		},
+		"WithTrailingPathListSeparator": {
+			fileName:         "mytool",
+			executableExists: true,
+			setup: func() string {
+				// GIVEN the first directory d1 in path containing executable e1
+				dir := t.TempDir()
+				executable := filepath.Join(dir, "mytool")
+				if err := os.WriteFile(
+					executable,
+					[]byte("#!/bin/sh\nexit 0\n"),
+					PermExecutable,
+				); err != nil {
+					t.Fatalf("create executable fixture: %v", err)
+				}
+
+				// GIVEN leading path list separator
+				t.Setenv("PATH", strings.Join([]string{dir, ""}, ":"))
+				return executable
+			},
+		},
 	}
 
 	for name, tc := range testCases {

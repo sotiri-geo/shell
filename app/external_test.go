@@ -12,6 +12,7 @@ func TestExternalCommand(t *testing.T) {
 		var output bytes.Buffer
 		want := "false\n"
 		command := "always_false"
+		// GIVEN always_false executable in path p1
 		dir := t.TempDir()
 		p1 := filepath.Join(dir, command)
 		if err := os.WriteFile(

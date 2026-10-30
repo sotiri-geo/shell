@@ -182,8 +182,8 @@ Contract:
 * Add a test to check external command exists but not on PATH - fallback
 * Add a test to check multiple args are accepted with helper - Do implementation with TDD
 * findExecutable to handle relative paths "." with "./executable" 
+* Add findExectuable with leading and trailing path list separators i.e. ":file/to/path" and "file/to/path:"
 
 ## TODO
 
-* Add findExectuable with leading and trailing path list separators i.e. ":file/to/path" and "file/to/path:"
 * Wire it up with the router in execute()
