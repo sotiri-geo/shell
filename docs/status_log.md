@@ -183,7 +183,5 @@ Contract:
 * Add a test to check multiple args are accepted with helper - Do implementation with TDD
 * findExecutable to handle relative paths "." with "./executable" 
 * Add findExectuable with leading and trailing path list separators i.e. ":file/to/path" and "file/to/path:"
-
-## TODO
-
 * Wire it up with the router in execute()
+

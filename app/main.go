@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -23,19 +22,17 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	case "type":
 		err = handleType(args, out)
 	default:
-		// Check its an command found on PATH
-		if execPath, found := findExecutable(command, "PATH"); found {
-			cmd := exec.Command(execPath)
-			// Must write to writer
-			cmd.Stdout = out
+		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
 
-			if err = cmd.Run(); err != nil {
-				return false, fmt.Errorf("runnning command %v: %w", command, err)
-			}
-			return false, err
+		if !found {
+			fmt.Fprintf(out, "%v: command not found\n", strings.TrimSpace(command))
+			return false, nil
 		}
 
-		_, err = fmt.Fprintf(out, "%v: command not found\n", strings.TrimSpace(command))
+		if err != nil {
+			return false, fmt.Errorf("executing command: %w", err)
+		}
+
 	}
 	return false, err
 }
