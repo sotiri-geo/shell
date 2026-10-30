@@ -8,7 +8,6 @@ import (
 )
 
 func TestExternalCommand(t *testing.T) {
-	// Check we run when exists
 	t.Run("Exists", func(t *testing.T) {
 		var output bytes.Buffer
 		want := "false\n"
@@ -40,7 +39,19 @@ func TestExternalCommand(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
-	// Check we don't run when exists
+
+	t.Run("NotExists", func(t *testing.T) {
+		var output bytes.Buffer
+
+		found, err := runCommand("invalid_command", &output)
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if found {
+			t.Errorf("found unknown command: %q", "invalid_command")
+		}
+	})
 	// Check when exists but not on path
 	// Check runs with multiple commands
 }

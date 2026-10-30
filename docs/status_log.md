@@ -174,6 +174,8 @@ Contract:
 * If the first arg is an executable it should execute it with any subsequent user args
 * Skip if first arg is not an executable found in PATH
 
+## 30-10-26
+
 ## TODO
 
 * Add test to check when external command doesn't exist - fallback
