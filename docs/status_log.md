@@ -176,10 +176,13 @@ Contract:
 
 ## 30-10-26
 
-## TODO
+## Completed
 
 * Add test to check when external command doesn't exist - fallback
 * Add a test to check external command exists but not on PATH - fallback
+
+## TODO
+
 * Add a test to check multiple args are accepted with helper - Do implementation with TDD
 * Wire it up with the router in execute()
 
