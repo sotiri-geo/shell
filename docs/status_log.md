@@ -199,6 +199,7 @@ Contract:
   * Consider starting with a failing test
   * Then write a test for handlePwd in isolation
   * Wire it up into the router
+* Test to validate that when we have a competeing pwd as an external executable, we still pick the builtin - validates builtin takes priority
 
 ## Context
 

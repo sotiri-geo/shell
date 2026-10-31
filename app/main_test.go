@@ -81,6 +81,41 @@ func TestRoutingCommand(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+
+	// We prove that when there exists a competing external executable
+	// that builtin executable takes priority
+	t.Run("WithCompetingExternalPwdCommand", func(t *testing.T) {
+		// GIVEN a directory d1
+		d1 := t.TempDir()
+		want := fmt.Sprintf("$ %s\n$ ", d1)
+		d2 := t.TempDir()
+		// GIVEN competing executable pwd in d2
+		executable := filepath.Join(d2, "pwd")
+		if err := os.WriteFile(
+			executable,
+			[]byte("#!/bin/sh\necho EXTERNAL\n"),
+			PermExecutable,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		// GIVEN external pwd is discoverable through PATH
+		t.Setenv("PATH", d2)
+		// GIVEN a change in working directory d1
+		t.Chdir(d1)
+		var output bytes.Buffer
+
+		// WHEN we execute `pwd` command
+		err := run(strings.NewReader("pwd\n"), &output)
+		// THEN no errors and directory d1 is written
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestRun(t *testing.T) {
