@@ -193,6 +193,7 @@ Contract:
 
 * fetch the base in runCommand to only run cmd() with the executable name rather than full path. This is because the dir 
   already lives in PATH env variable.
+* Add a failing test on the boundary - in execute - handle the logic when a user calls `pwd`
 
 ## Context
 
@@ -214,7 +215,7 @@ $ pwd
 
 ## TODO 
 
-* Add a failing test on the boundary - in execute - handle the logic when a user calls `pwd`
+* Add a test on handleType to ensure `pwd` is recognised as a builtin.
 * Consider refactoring this out as a handler to manage the logic of discovering working directory 
   * Consider starting with a failing test
 * Consider refactoring execute into routing both builtin and external - Ask codex whether this would be a good approach

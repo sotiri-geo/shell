@@ -28,6 +28,7 @@ func handleType(args string, out io.Writer) error {
 		"echo": true,
 		"exit": true,
 		"type": true,
+		"pwd":  true,
 	}
 	var err error
 	for arg := range strings.SplitSeq(strings.TrimSpace(args), " ") {

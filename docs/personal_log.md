@@ -28,3 +28,8 @@ we've done in this project:
 A good measure of whether we should extend an existing table test vs creating another sub-test using t.Run() is whether the subject under
 test requires a different setup/assertion pattern to the existing test cases. If you need a different env setup (or assertion pattern) but 
 the test is closely related to the other tests, just add another t.Run() under that test group.
+
+## Refactoring
+
+* Let the test cases guide you on potential areas that may need refactoring 
+* We've initially seen early during the dispatching of builtin handlers in the `execute()` func, that builtin names are managed in two places: One in the `execute()` body and another in `handleType` map. This risk of drift causes refactoring pressure, that is visible when writing tests across the boundaries. Because these lists of builtin names may become difficult to keep consistent.

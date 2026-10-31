@@ -39,6 +39,10 @@ func TestType(t *testing.T) {
 			input: "type",
 			want:  "type is a shell builtin\n",
 		},
+		"WithBuilinCommandPwd": {
+			input: "pwd",
+			want:  "pwd is a shell builtin\n",
+		},
 		"WithMulitpleBuitinCommandType": {
 			input: "type echo",
 			want:  "type is a shell builtin\necho is a shell builtin\n",
