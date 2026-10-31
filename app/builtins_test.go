@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -345,6 +346,27 @@ func TestFindExecutableReturnsFileSeparatorWithRelativePath(t *testing.T) {
 	}
 
 	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestPwd(t *testing.T) {
+	var output bytes.Buffer
+	// GIVEN a directory d1
+	d1 := t.TempDir()
+	want := fmt.Sprintf("%s\n", d1)
+
+	// GIVEN Chdir to d1
+	t.Chdir(d1)
+
+	// WHEN calling handlePwd
+	err := handlePwd(&output)
+	if err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	// THEN no error & d1 is written to output
+	if got := output.String(); got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }

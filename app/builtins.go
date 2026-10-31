@@ -50,6 +50,17 @@ func handleType(args string, out io.Writer) error {
 	return err
 }
 
+// handlePwd will write to out the current working directory of the process
+func handlePwd(out io.Writer) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("executing pwd: %w", err)
+	}
+	fmt.Fprintf(out, "%s\n", cwd)
+
+	return nil
+}
+
 // findExecutable returns the first executable path for `name`.
 // For example if the first executable path of `mytool` in PATH is `file/to/bin` then
 // execPath would return file/to/bin/mytool. For relative path ".", we join the file separator
