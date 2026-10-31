@@ -195,6 +195,10 @@ Contract:
   already lives in PATH env variable.
 * Add a failing test on the boundary - in execute - handle the logic when a user calls `pwd`
 * Add a test on handleType to ensure `pwd` is recognised as a builtin.
+* Consider refactoring this out as a handler to manage the logic of discovering working directory 
+  * Consider starting with a failing test
+  * Then write a test for handlePwd in isolation
+  * Wire it up into the router
 
 ## Context
 
@@ -216,8 +220,4 @@ $ pwd
 
 ## TODO 
 
-* Consider refactoring this out as a handler to manage the logic of discovering working directory 
-  * Consider starting with a failing test
-  * Then write a test for handlePwd in isolation
-  * Wire it up into the router
 * Consider refactoring execute into routing both builtin and external - Ask codex whether this would be a good approach

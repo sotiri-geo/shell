@@ -22,11 +22,7 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	case "type":
 		err = handleType(args, out)
 	case "pwd":
-		cwd, err := os.Getwd()
-		if err != nil {
-			return false, fmt.Errorf("executing pwd: %w", err)
-		}
-		fmt.Fprintf(out, "%s\n", cwd)
+		err = handlePwd(out)
 	default:
 		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
 
