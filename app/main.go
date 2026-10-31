@@ -21,6 +21,9 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 		err = handleEcho(args, out)
 	case "type":
 		err = handleType(args, out)
+	case "pwd":
+		cwd, _ := os.Getwd()
+		fmt.Fprintf(out, "%s\n", cwd)
 	default:
 		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
 

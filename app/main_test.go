@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,6 +57,30 @@ func TestRoutingCommand(t *testing.T) {
 			}
 		})
 	}
+
+	// PWD requires a different setup but is logically related to the routing
+	// that occurs in execute()
+	t.Run("WithPwd", func(t *testing.T) {
+		// GIVEN a directory d1
+		d1 := t.TempDir()
+		want := fmt.Sprintf("$ %s\n$ ", d1)
+		// GIVEN a change in working directory d1
+		t.Chdir(d1)
+		// GIVEN PATH is empty to avoid fallback to system pwd command
+		t.Setenv("PATH", "")
+		var output bytes.Buffer
+
+		// WHEN we execute `pwd` command
+		err := run(strings.NewReader("pwd\n"), &output)
+		// THEN no errors and directory d1 is written
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestRun(t *testing.T) {
