@@ -184,30 +184,12 @@ Contract:
 * findExecutable to handle relative paths "." with "./executable" 
 * Add findExectuable with leading and trailing path list separators i.e. ":file/to/path" and "file/to/path:"
 * Wire it up with the router in execute()
+* fetch the base in runCommand to only run cmd() with the executable name rather than full path. This is because the dir 
+  already lives in PATH env variable.
 
 ## 31-10-26
 
-## TODO
+## Completed
 
-* Not return the abs path (see traceback error)
-* It makes senses that given that we override PATH on the tests to include the executable.
-    * We only need to check if the executable exists. The shell will run this.
-
-[tester::#IP1] Running tests for Stage #IP1 (Run a program)
-[tester::#IP1] [setup] export PATH=/tmp/owl:$PATH
-[tester::#IP1] [setup] Available executables:
-[tester::#IP1] [setup] - custom_exe_4082
-[tester::#IP1] [setup] - custom_exe_6402
-[tester::#IP1] Running ./your_program.sh
-[your-program] $ custom_exe_4082 Alice David Maria
-[your-program] Program was passed 4 args (including program name).
-[your-program] Arg #0 (program name): /tmp/owl/custom_exe_4082
-[tester::#IP1] ^ Line does not match expected value.
-[tester::#IP1] Expected: "Arg #0 (program name): custom_exe_4082"
-[tester::#IP1] Received: "Arg #0 (program name): /tmp/owl/custom_exe_4082"
-[your-program] Arg #1: Alice
-[your-program] Arg #2: David
-[your-program] Arg #3: Maria
-[your-program] Program Signature: 3715735222
-[your-program] $
-[tester::#IP1] Test failed
+* fetch the base in runCommand to only run cmd() with the executable name rather than full path. This is because the dir 
+  already lives in PATH env variable.
