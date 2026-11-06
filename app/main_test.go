@@ -116,6 +116,53 @@ func TestRoutingCommand(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+
+	t.Run("WithCd", func(t *testing.T) {
+		// GIVEN a directory with its absolute path d1
+		d1 := t.TempDir()
+		absD1, err := filepath.EvalSymlinks(d1)
+		if err != nil {
+			t.Fatalf("resolving symlink: %v", err)
+		}
+
+		var output bytes.Buffer
+
+		// WHEN we execute the cd command with the d1
+		err = run(strings.NewReader(fmt.Sprintf("cd %s\n", absD1)), &output)
+		// THEN no errors, output is empty
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if got := output.String(); got != "$ $ " {
+			t.Errorf("should return newline when changing directory: got %q", got)
+		}
+	})
+	t.Run("WithCdThenPwd", func(t *testing.T) {
+		// GIVEN a directory with its absolute path d1
+		d1 := t.TempDir()
+		absD1, err := filepath.EvalSymlinks(d1)
+
+		// Change dir for starting point
+		t.Chdir(t.TempDir())
+		if err != nil {
+			t.Fatalf("resolving symlink: %v", err)
+		}
+
+		var output bytes.Buffer
+
+		// WHEN we execute the cd command with the d1
+		err = run(strings.NewReader(fmt.Sprintf("cd %s\n pwd\n", absD1)), &output)
+		// THEN no errors, output is empty
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		want := fmt.Sprintf("$ $ %s\n$ ", absD1)
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestRun(t *testing.T) {

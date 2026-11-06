@@ -23,6 +23,14 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 		err = handleType(args, out)
 	case "pwd":
 		err = handlePwd(out)
+	case "cd":
+		// TODO: Only handle abs paths
+		// Logic move cwd
+		err = os.Chdir(args)
+		if err != nil {
+			return false, fmt.Errorf("changing directory: %w", err)
+		}
+
 	default:
 		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
 

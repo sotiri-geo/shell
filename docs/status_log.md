@@ -219,6 +219,49 @@ $ pwd
 * When a user executes pwd command then abs path of the current working dirctory should be returned
 * This is a builtin command and should be prioritised over external executables
 
+## 06-11-26
+
+## Context
+
+We now need to implement the builtin `cd` command to handle absolute paths. This command changes directory.
+
+The cd command can handle different types of arguments:
+
+* Abs paths, like /usr/local/bin
+* Relative paths, like ./, ../, ./dir 
+* ~ character, which represents the user's home directory
+
+For this stage we'll focus on abs paths. This starts with "/" and specifes a location from the root of the filesystem.
+
+## Contract
+
+* If the directory exists, change to that directory
+* If the directory doesn't exist, print cd: <directory>: No such file or directory
+
+
+## Example
+
+$ pwd
+/home/user
+$ cd /usr/local/bin
+$ pwd
+/usr/local/bin
+$ cd /does_not_exist
+cd: /does_not_exist: No such file or directory
+$ pwd
+/usr/local/bin
+
+## Completed
+
+* Add failing test on the boundary to where we dispatch builtin commands for `cd` i.e. in TestRoutingCommand
+* Implement the failing test - happy path
+
+
 ## TODO 
 
-* Consider refactoring execute into routing both builtin and external - Ask codex whether this would be a good approach
+* Add test for cd handler on path existing
+* Implement handler in builtin file
+* Extend test to non existant paths
+* Extend test to show paths fail when not abs paths
+* Wire up into the dispatcher in the execute() helper
+
