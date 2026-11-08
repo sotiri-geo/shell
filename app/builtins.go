@@ -66,7 +66,8 @@ func handleCd(dir string, out io.Writer) error {
 	err := os.Chdir(dir)
 
 	if errors.Is(err, os.ErrNotExist) {
-		fmt.Fprintf(out, "cd: %s: No such file or directory\n", dir)
+		_, writeErr := fmt.Fprintf(out, "cd: %s: No such file or directory\n", dir)
+		return writeErr
 	}
 	return err
 }

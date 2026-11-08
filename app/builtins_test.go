@@ -406,11 +406,10 @@ func TestCd(t *testing.T) {
 
 		// WHEN executing command cd with d2
 		err := handleCd(d2, &output)
-
 		// THEN error is written: cd <directory>: No such file or directory
 		// AND current path should be unchanged (no-op)
-		if err == nil {
-			t.Fatalf("should error as file does not exist: %v", err)
+		if err != nil {
+			t.Fatalf("should not return error when dir does not exist: %v", err)
 		}
 		want := fmt.Sprintf("cd: %s: No such file or directory\n", d2)
 
@@ -425,25 +424,6 @@ func TestCd(t *testing.T) {
 
 		if cwd != d1 {
 			t.Errorf("current working directory should have not changed: got %q, want %q ", cwd, d1)
-		}
-	})
-	t.Run("WithRelativeFilePathFails", func(t *testing.T) {
-		var output bytes.Buffer
-		// GIVEN a cwd d1 and a non existant directory d2
-		t.Chdir(t.TempDir())
-		d2 := "/does/not/exist"
-
-		// WHEN executing command cd with d2
-		err := handleCd(d2, &output)
-
-		// THEN error is written: cd <directory>: No such file or directory
-		if err == nil {
-			t.Fatalf("should error as file does not exist: %v", err)
-		}
-		want := fmt.Sprintf("cd: %s: No such file or directory\n", d2)
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q want %q", got, want)
 		}
 	})
 }

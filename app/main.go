@@ -24,11 +24,7 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	case "pwd":
 		err = handlePwd(out)
 	case "cd":
-		err := handleCd(args, out)
-		if err != nil {
-			return false, fmt.Errorf("changing directory: %w", err)
-		}
-
+		err = handleCd(args, out)
 	default:
 		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
 

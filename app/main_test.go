@@ -163,6 +163,28 @@ func TestRoutingCommand(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+
+	t.Run("WithCdAndNonExistentPath", func(t *testing.T) {
+		// GIVEN a directory with its absolute path d1
+		d1 := t.TempDir()
+		d2 := "/does/not/exist"
+
+		// Change dir for starting point
+		t.Chdir(d1)
+		var output bytes.Buffer
+
+		// WHEN we execute the cd command with the d1
+		err := run(strings.NewReader(fmt.Sprintf("cd %s\n", d2)), &output)
+		// THEN should return path not exist message with error
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		want := fmt.Sprintf("$ cd: %s: No such file or directory\n$ ", d2)
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestRun(t *testing.T) {
