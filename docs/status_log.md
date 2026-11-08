@@ -267,9 +267,9 @@ $ pwd
 * Implement that hanlding of non-existent paths
 * Wire up into the dispatcher in the execute() helper
 * Debug why $ prompt is missing in output: returning errors stops execution/exits shell. 
-
-## TODO
-
 * non-existent directories when calling `cd` should be graceful and not exit program. Perhaps only failing to write error to output causes exit.
+* Add tests for "./", "../" , "./dir" - relative paths 
+
+
 
 

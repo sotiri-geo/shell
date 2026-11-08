@@ -426,4 +426,61 @@ func TestCd(t *testing.T) {
 			t.Errorf("current working directory should have not changed: got %q, want %q ", cwd, d1)
 		}
 	})
+
+	t.Run("WithRelativeParentDir", func(t *testing.T) {
+		var output bytes.Buffer
+		// GIVEN a cwd d1 and another relative dir "../"
+		cwd := t.TempDir()
+		t.Chdir(cwd)
+		d1, err := filepath.EvalSymlinks(cwd)
+		if err != nil {
+			t.Fatalf("evaluating symbolic links: %v", err)
+		}
+
+		d2 := "../"
+
+		// WHEN executing command cd with arg d1
+		if err = handleCd(d2, &output); err != nil {
+			t.Fatalf("executing cd with %q: %v", d2, err)
+		}
+
+		// Then the current working directory is d2
+		got, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("calling Getwd: %v", err)
+		}
+		want := filepath.Dir(d1)
+
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("WithRelativeCurrDir", func(t *testing.T) {
+		// GIVEN a known working directory.
+		t.Chdir(t.TempDir())
+		before, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("get starting working directory: %v", err)
+		}
+
+		// WHEN changing to the current directory using a relative path.
+		var output bytes.Buffer
+		if err := handleCd("./", &output); err != nil {
+			t.Fatalf("cd ./ should succeed: %v", err)
+		}
+
+		// THEN the working directory is unchanged and no output is written.
+		after, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("get working directory after cd: %v", err)
+		}
+
+		if after != before {
+			t.Errorf("working directory changed: got %q, want %q", after, before)
+		}
+		if got := output.String(); got != "" {
+			t.Errorf("successful cd should write no output, got %q", got)
+		}
+	})
 }
