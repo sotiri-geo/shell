@@ -237,6 +237,7 @@ For this stage we'll focus on abs paths. This starts with "/" and specifes a loc
 
 * If the directory exists, change to that directory
 * If the directory doesn't exist, print cd: <directory>: No such file or directory
+* If cd fails to execute, should be a no-op
 
 
 ## Example
@@ -257,11 +258,12 @@ $ pwd
 * Implement the failing test - happy path
 
 
-## TODO 
+## 08-11-26
 
+## Completed 
 * Add test for cd handler on path existing
 * Implement handler in builtin file
-* Extend test to non existant paths
-* Extend test to show paths fail when not abs paths
+* Extend test to non existent paths: This should verify the behaviour of writing the error msg to output. Current path should be unchanged.
+* Implement that hanlding of non-existent paths
 * Wire up into the dispatcher in the execute() helper
 

@@ -370,3 +370,80 @@ func TestPwd(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+func TestCd(t *testing.T) {
+	t.Run("WithExistingPath", func(t *testing.T) {
+		var output bytes.Buffer
+		// GIVEN a cwd d1 and another abs directory path d2
+		t.Chdir(t.TempDir())
+		d2, err := filepath.EvalSymlinks(t.TempDir())
+		if err != nil {
+			t.Fatalf("evaluating symbolic links: %v", err)
+		}
+
+		// WHEN executing command cd with arg d1
+		if err = handleCd(d2, &output); err != nil {
+			t.Fatalf("executing cd with %q: %v", d2, err)
+		}
+
+		// Then the current working directory is d2
+		got, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("calling Getwd: %v", err)
+		}
+
+		if got != d2 {
+			t.Errorf("got %q, want %q", got, d2)
+		}
+	})
+
+	t.Run("WithNonExistentPath", func(t *testing.T) {
+		var output bytes.Buffer
+		// GIVEN a cwd d1 and a non existant directory d2
+		d1 := t.TempDir()
+		t.Chdir(d1)
+		d2 := "/does/not/exist"
+
+		// WHEN executing command cd with d2
+		err := handleCd(d2, &output)
+
+		// THEN error is written: cd <directory>: No such file or directory
+		// AND current path should be unchanged (no-op)
+		if err == nil {
+			t.Fatalf("should error as file does not exist: %v", err)
+		}
+		want := fmt.Sprintf("cd: %s: No such file or directory\n", d2)
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+
+		cwd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("calling Getwd: %v", err)
+		}
+
+		if cwd != d1 {
+			t.Errorf("current working directory should have not changed: got %q, want %q ", cwd, d1)
+		}
+	})
+	t.Run("WithRelativeFilePathFails", func(t *testing.T) {
+		var output bytes.Buffer
+		// GIVEN a cwd d1 and a non existant directory d2
+		t.Chdir(t.TempDir())
+		d2 := "/does/not/exist"
+
+		// WHEN executing command cd with d2
+		err := handleCd(d2, &output)
+
+		// THEN error is written: cd <directory>: No such file or directory
+		if err == nil {
+			t.Fatalf("should error as file does not exist: %v", err)
+		}
+		want := fmt.Sprintf("cd: %s: No such file or directory\n", d2)
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
+}

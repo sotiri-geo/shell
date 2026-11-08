@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -59,6 +60,15 @@ func handlePwd(out io.Writer) error {
 	fmt.Fprintf(out, "%s\n", cwd)
 
 	return nil
+}
+
+func handleCd(dir string, out io.Writer) error {
+	err := os.Chdir(dir)
+
+	if errors.Is(err, os.ErrNotExist) {
+		fmt.Fprintf(out, "cd: %s: No such file or directory\n", dir)
+	}
+	return err
 }
 
 // findExecutable returns the first executable path for `name`.

@@ -24,9 +24,7 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	case "pwd":
 		err = handlePwd(out)
 	case "cd":
-		// TODO: Only handle abs paths
-		// Logic move cwd
-		err = os.Chdir(args)
+		err := handleCd(args, out)
 		if err != nil {
 			return false, fmt.Errorf("changing directory: %w", err)
 		}
