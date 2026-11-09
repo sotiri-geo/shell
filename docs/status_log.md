@@ -270,6 +270,18 @@ $ pwd
 * non-existent directories when calling `cd` should be graceful and not exit program. Perhaps only failing to write error to output causes exit.
 * Add tests for "./", "../" , "./dir" - relative paths 
 
+## 09-11-26
 
+## Contract
+
+* When a user passing the "~" tilder character, `cd` should switch to the users home directory
+* The home directory is defined by the `$HOME` env variable
+
+## Completed
+* Test that "~" changes dir to the default home directory
+
+## TODO
+
+* Test when changing the $HOME variable, this still obeys
 
 

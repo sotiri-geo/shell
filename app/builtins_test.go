@@ -483,4 +483,36 @@ func TestCd(t *testing.T) {
 			t.Errorf("successful cd should write no output, got %q", got)
 		}
 	})
+
+	t.Run("WithTilder", func(t *testing.T) {
+		// GIVEN a default home dir d1
+		t.Chdir(t.TempDir())
+		want, err := filepath.EvalSymlinks(os.Getenv("HOME"))
+		if err != nil {
+			t.Fatalf("evaluating symlink of path: %v", err)
+		}
+
+		// WHEN changing to home directory using ~
+		var output bytes.Buffer
+		if err := handleCd("~", &output); err != nil {
+			t.Fatalf("cd ~ should succeed: %v", err)
+		}
+
+		// THEN the working directory should be $HOME and no output is written
+		after, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("get working directory after cd: %v", err)
+		}
+
+		if after != want {
+			t.Errorf("working directory changed: got %q, want %q", after, want)
+		}
+
+		if output.String() != "" {
+			t.Errorf("successful cd should write no output: got %q", &output)
+		}
+	})
+
+	t.Run("WithTilderAndNonDefaultHome", func(t *testing.T) {
+	})
 }

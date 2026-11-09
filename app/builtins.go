@@ -63,6 +63,10 @@ func handlePwd(out io.Writer) error {
 }
 
 func handleCd(dir string, out io.Writer) error {
+	// reroute to $HOME path
+	if dir == "~" {
+		return os.Chdir(os.Getenv("HOME"))
+	}
 	err := os.Chdir(dir)
 
 	if errors.Is(err, os.ErrNotExist) {
