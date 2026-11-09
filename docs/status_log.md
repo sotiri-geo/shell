@@ -279,9 +279,4 @@ $ pwd
 
 ## Completed
 * Test that "~" changes dir to the default home directory
-
-## TODO
-
 * Test when changing the $HOME variable, this still obeys
-
-
