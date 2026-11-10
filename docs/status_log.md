@@ -280,3 +280,27 @@ $ pwd
 ## Completed
 * Test that "~" changes dir to the default home directory
 * Test when changing the $HOME variable, this still obeys
+
+
+## 10-11-26
+
+## Shell quoting
+
+In bash, quoting is used to control how the shell interprets characters and words. Its mainly used to remove the special meaning of certain characters or words to the shell. This can include special treatment for special characters, to prevent reserved words from being recognised as such and prevent parameter expansion.
+
+To highlight:
+* Single quotes '' preseve all characters including variable expansion like $1, $2 etc
+* Double quotes "" preserve most characters but allow certain special characters like $ and \ to be intepreted
+
+## The backslash escape character
+
+The backslash character `\` can escape a single character, removing its special meaing, example:
+
+$ echo three   spaces
+three spaces
+$ echo three\ \ \ spaces
+three   spaces
+
+Here, the backslash escapes each space, making them part of the string instead of a separator. This means the backslash preseves the literal value of the next character that follows, removing any special meaning it has, with the exception of newline.
+
+
