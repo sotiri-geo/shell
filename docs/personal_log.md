@@ -33,3 +33,9 @@ the test is closely related to the other tests, just add another t.Run() under t
 
 * Let the test cases guide you on potential areas that may need refactoring 
 * We've initially seen early during the dispatching of builtin handlers in the `execute()` func, that builtin names are managed in two places: One in the `execute()` body and another in `handleType` map. This risk of drift causes refactoring pressure, that is visible when writing tests across the boundaries. Because these lists of builtin names may become difficult to keep consistent.
+
+## Identifying responsiblities
+
+* When working on parsing single quotes, the question came up as to where this responsibility belonged.
+* What should the command handler need to know about how the user wrote its original args. Should it need to be able to understand how to parsing single quotes, or is this agnositic to all commands. In this case, does the responsibility belong to the caller?
+* Big question: How can you test that the shell ACTUALLY preserved the boundary within single quotes. Doing thing inside echo command can mask the underlinning operations. i.e. echo 'helloworld' and echo hello''world would return the same response, so it doesn't PROVE that the parsing actually occurred.

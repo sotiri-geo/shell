@@ -303,4 +303,28 @@ three   spaces
 
 Here, the backslash escapes each space, making them part of the string instead of a separator. This means the backslash preseves the literal value of the next character that follows, removing any special meaning it has, with the exception of newline.
 
+## 12-11-26
 
+Tests will verify with the echo command. So we can do manual user testing to verify behaviour.
+
+## Contract
+
+* when parsing a command with single quotes, all characters are preseved
+* when parsing a command with spaces and tabs within single quotes, they are not collapsed or used as delimiters
+* when parsing a command with quoted strings next to each other, they are concatenated to a single argument
+
+## Notes
+
+My issue here is that we are dealing with parsing the argument rather than the command. So whilst we are going to be testing for echo 'hello  world', to preseve space, this can occur for every commands argument. 
+
+
+## 13-11-16
+
+## Completed
+* Write a failing test that shows single quotes preserves whitespace during an echo command 
+
+## TODO
+
+* Expand the failing test to include other special characters like $, \, %, !, ~.
+* Add a test to show that two quoted strings next to eachother collapse into one i.e. 'hello''world' and 'hello' 'world'
+* Add test that shows empty quotes are ignored hello''world goes to helloworld
