@@ -318,13 +318,20 @@ Tests will verify with the echo command. So we can do manual user testing to ver
 My issue here is that we are dealing with parsing the argument rather than the command. So whilst we are going to be testing for echo 'hello  world', to preseve space, this can occur for every commands argument. 
 
 
-## 13-11-16
+## 13-11-26
 
 ## Completed
 * Write a failing test that shows single quotes preserves whitespace during an echo command 
 
-## TODO
+## 15-11-26
 
+## Completed
 * Expand the failing test to include other special characters like $, \, %, !, ~.
 * Add a test to show that two quoted strings next to eachother collapse into one i.e. 'hello''world' and 'hello' 'world'
 * Add test that shows empty quotes are ignored hello''world goes to helloworld
+ 
+## TODO
+
+* Wire it all up to the execute
+* Create one integration test that proves the command handlers are recieving the parsed args before processing
+

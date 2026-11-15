@@ -121,6 +121,20 @@ func TestClosingIndex(t *testing.T) {
 			want:   12,
 			exists: false,
 		},
+		"WithSingleQuoteWhitespaceAndMultipleWords": {
+			start:  0,
+			sep:    '\'',
+			args:   "'hello' world",
+			want:   6,
+			exists: true,
+		},
+		"WithSingleQuoteAndMultipleWords": {
+			start:  0,
+			sep:    '\'',
+			args:   "'hello'world",
+			want:   6,
+			exists: true,
+		},
 	}
 
 	for name, tc := range testCases {
