@@ -7,18 +7,45 @@ import (
 func parseArgs(args string) string {
 	output := make([]string, 0, len(args))
 
-	hasSingleQuotes := len(args) > 0 && args[0] == '\'' && args[len(args)-1] == '\''
+	// Identify each word within a single quote
+	// when we identify a single quote, we essentially need to traverse until we find
+	// a closing quote, whilst preserving the characters found.
 
-	if hasSingleQuotes {
-		return args[1 : len(args)-1]
-	}
-	// Remove multiple whitespaces
-	for part := range strings.SplitSeq(args, " ") {
-		if part != "" {
-			output = append(output, strings.ReplaceAll(part, "'", ""))
+	i := 0
+	// Behaves like a while loop
+	for i < len(args) {
+		// Handle single quotes in a single batch
+		if args[i] == '\'' {
+			if end, found := getClosingIndex(i, '\'', args); found {
+				output = append(output, args[i+1:end])
+				// fast-forward
+				i = end + 1
+			}
+			// handle error
+			continue
 		}
+		// We now need to handle non-quoted chacacters that are not whitespace
+		if args[i] != ' ' {
+			if end, found := getClosingIndex(i, ' ', args); found {
+				output = append(output, args[i+1:end])
+				i = end + 1
+			}
+		}
+		i++
 	}
 
 	return strings.Join(output, " ")
+}
+
+func getClosingIndex(start int, sep byte, args string) (end int, found bool) {
+	// We first inspect the next element in array
+	end = start + 1
+	for end < len(args) {
+		if args[end] == sep {
+			return end, true
+		}
+		end++
+	}
+	return end, false
 }
 
