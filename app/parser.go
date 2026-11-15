@@ -71,4 +71,3 @@ func getClosingIndex(start int, sep byte, args string) (end int, found bool) {
 	}
 	return end, false
 }
-

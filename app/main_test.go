@@ -9,6 +9,35 @@ import (
 	"testing"
 )
 
+func TestCommandRecievesParsedArgs(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  string
+	}{
+		"WithArgsCollapsed": {
+			input: "echo hello''world\n",
+			want:  "$ helloworld\n$ ",
+		},
+		"WithSingleQuotesPresevingCharacters": {
+			input: "echo 'hello   world'\n",
+			want:  "$ hello   world\n$ ",
+		},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+			err := run(strings.NewReader(tc.input), &output)
+			if err != nil {
+				t.Fatalf("should not fail: %v", err)
+			}
+
+			if got := output.String(); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestRoutingCommand(t *testing.T) {
 	testCases := map[string]struct {
 		input string
