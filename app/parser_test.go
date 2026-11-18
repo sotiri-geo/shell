@@ -71,6 +71,10 @@ func TestParserSingleQuoted(t *testing.T) {
 			input: "'hello'   'world'",
 			want:  []string{"hello", "world"},
 		},
+		"WithEmptyQuotesIgnoredAtEnd": {
+			input: "helloworld''",
+			want:  []string{"helloworld"},
+		},
 	}
 
 	for name, tc := range testCases {

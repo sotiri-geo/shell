@@ -31,6 +31,9 @@ func parseArgs(args string) ([]string, error) {
 					// this can sometimes go all the way till end of string if sep not found
 					if len(output) > 0 {
 						start := end + 1
+						if start >= len(args) {
+							break
+						}
 						if args[start] == '\'' {
 							i = start
 							continue
