@@ -6,6 +6,8 @@ import (
 
 var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
 
+// parseArgs will preseve the characters inside the single quotes as per the GNU docs. Args that
+// are defined outside this boundary are separated by whitespace.
 func parseArgs(args string) ([]string, error) {
 	output := []string{}
 	// Identify each word within a single quote

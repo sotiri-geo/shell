@@ -346,8 +346,5 @@ My issue here is that we are dealing with parsing the argument rather than the c
 
 ## TODO - Massive refactor
 
-I’d fix the parser’s behaviour first, then clean up routing. Each item can be a separate commit.
 
-2. Make the parser finish one argument at a time. Start with a failing parser test for pre'x y'post. It should produce one argument, prex ypost. Use that case to decide when to accumulate text and when to emit an argument. Then update the external test fixture to use "$@" and add one test that proves a quoted argument reaches the external process intact.
-3. Make builtin recognition consistent. Write a type cd test with an empty PATH, then make type and execute agree on which names are builtins. Keep the switch while you make that change. Once the two paths agree, look at whether extracting the external branch makes execute easier to read.
 4. Revisit the command struct. If parsing now owns the whole line and passes a name plus []string to dispatch, the struct can make that boundary explicit. If it would just replace two local variables inside execute, leave it for later.
