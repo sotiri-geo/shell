@@ -1,11 +1,7 @@
 package main
 
-import (
-	"strings"
-)
-
-func parseArgs(args string) string {
-	var output strings.Builder
+func parseArgs(args string) []string {
+	output := []string{}
 	// Identify each word within a single quote
 	// when we identify a single quote, we essentially need to traverse until we find
 	// a closing quote, whilst preserving the characters found.
@@ -16,7 +12,27 @@ func parseArgs(args string) string {
 		// Handle single quotes in a single batch
 		if args[i] == '\'' {
 			if end, found := getClosingIndex(i, '\'', args); found {
-				output.WriteString(args[i+1 : end])
+				if i+1 < end {
+					// We can also concat if we discover no whitespace between two single quotes
+					// e.g. 'hello''world' -> "helloworld"
+					if i > 0 && args[i-1] == args[i] {
+						output[len(output)-1] = output[len(output)-1] + args[i+1:end]
+					} else {
+						output = append(output, args[i+1:end])
+					}
+				} else {
+					// zero length quotes triggers a concat with previous word found
+					// this can sometimes go all the way till end of string if sep not found
+					if len(output) > 0 {
+						start := end + 1
+						if end, found := getClosingIndex(start, ' ', args); found {
+							output[len(output)-1] = output[len(output)-1] + args[start:end]
+						} else {
+							output[len(output)-1] = output[len(output)-1] + args[start:]
+							break
+						}
+					}
+				}
 				// move to the char next to the closing quote
 				i = end + 1
 			}
@@ -29,7 +45,7 @@ func parseArgs(args string) string {
 			for i < len(args) {
 				// Break out of current buffer and flush
 				if args[i] == ' ' || args[i] == '\'' {
-					output.WriteString(args[start:i])
+					output = append(output, args[start:i])
 					break
 				}
 				i++
@@ -37,27 +53,15 @@ func parseArgs(args string) string {
 
 			// If exhausted all characters: flush to buffer
 			if i == len(args) {
-				output.WriteString(args[start:i])
+				output = append(output, args[start:i])
 			}
 
-			continue
-		}
-		// Collapse whitespace from non-quoted characters
-		if args[i] == ' ' {
-			for i < len(args) {
-				if args[i] == ' ' {
-					i++
-					continue
-				}
-				break
-			}
-			output.WriteString(" ")
 			continue
 		}
 		i++
 	}
 
-	return output.String()
+	return output
 }
 
 func getClosingIndex(start int, sep byte, args string) (end int, found bool) {

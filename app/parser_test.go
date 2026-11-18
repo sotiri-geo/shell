@@ -1,23 +1,26 @@
 package main
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestParserUnquoted(t *testing.T) {
 	testCases := map[string]struct {
 		input string
-		want  string
+		want  []string
 	}{
 		"MultipleWords": {
 			input: "hello world",
-			want:  "hello world",
+			want:  []string{"hello", "world"},
 		},
 		"SingleWord": {
 			input: "hello",
-			want:  "hello",
+			want:  []string{"hello"},
 		},
 		"WithWhitespaceCollapsed": {
 			input: "hello    world",
-			want:  "hello world",
+			want:  []string{"hello", "world"},
 		},
 	}
 
@@ -25,8 +28,8 @@ func TestParserUnquoted(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got := parseArgs(tc.input)
 
-			if got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("got %+v, want %+v", got, tc.want)
 			}
 		})
 	}
@@ -35,35 +38,35 @@ func TestParserUnquoted(t *testing.T) {
 func TestParserSingleQuoted(t *testing.T) {
 	testCases := map[string]struct {
 		input string
-		want  string
+		want  []string
 	}{
 		"RemovesQuotes": {
 			input: "'hello world'",
-			want:  "hello world",
+			want:  []string{"hello world"},
 		},
 		"PreservesWhitespace": {
 			input: "'hello    world'",
-			want:  "hello    world",
+			want:  []string{"hello    world"},
 		},
-		"SingleQuotes": {
+		"SingleEmptyQuotes": {
 			input: "''",
-			want:  "",
+			want:  []string{},
 		},
 		"PreservesSpecialCharacters": {
 			input: "'$%!~\\'",
-			want:  "$%!~\\",
+			want:  []string{"$%!~\\"},
 		},
 		"WithEmptyQuotesIgnored": {
 			input: "hello''world",
-			want:  "helloworld",
+			want:  []string{"helloworld"},
 		},
 		"WithAdjacentQuotedStrings": {
 			input: "'hello''world'",
-			want:  "helloworld",
+			want:  []string{"helloworld"},
 		},
 		"WithGapAndAdjacentQuotedStrings": {
 			input: "'hello'   'world'",
-			want:  "hello world",
+			want:  []string{"hello", "world"},
 		},
 	}
 
@@ -71,8 +74,8 @@ func TestParserSingleQuoted(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got := parseArgs(tc.input)
 
-			if got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("got %+v, want %+v", got, tc.want)
 			}
 		})
 	}
