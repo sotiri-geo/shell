@@ -107,4 +107,43 @@ func TestExternalCommand(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+	t.Run("WithCat", func(t *testing.T) {
+		var output bytes.Buffer
+		d1 := t.TempDir()
+		t.Chdir(d1)
+		f1, f2 := "file1", "file2"
+		want := "mango chutney.blueberry pineapple."
+
+		p1 := filepath.Join(d1, f1)
+		p2 := filepath.Join(d1, f2)
+
+		if err := os.WriteFile(
+			p1,
+			[]byte("mango chutney."),
+			PermReadWrite,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+		if err := os.WriteFile(
+			p2,
+			[]byte("blueberry pineapple."),
+			PermReadWrite,
+		); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+
+		// Use default PATH - no override
+		found, err := runCommand("cat", &output, []string{f1, f2}...)
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if !found {
+			t.Fatal("should exist")
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }

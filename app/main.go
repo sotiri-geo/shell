@@ -28,7 +28,7 @@ func execute(line string, out io.Writer) (shouldExit bool, err error) {
 		err = handleCd(pargs[0], out)
 	// Run external command found in $PATH
 	default:
-		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
+		found, err := runCommand(command, out, pargs...)
 
 		if !found {
 			fmt.Fprintf(out, "%v: command not found\n", strings.TrimSpace(command))
