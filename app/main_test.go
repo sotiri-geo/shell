@@ -272,4 +272,18 @@ func TestRun(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+
+	t.Run("WithUnclosedSingleQuoteRecovers", func(t *testing.T) {
+		var output bytes.Buffer
+		want := "$ error: closing single quote not found\n$ "
+
+		err := run(strings.NewReader("echo '\n"), &output)
+		if err != nil {
+			t.Fatalf("should not error: %v", err)
+		}
+
+		if got := output.String(); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }

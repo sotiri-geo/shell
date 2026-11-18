@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,8 +15,9 @@ import (
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	command, args, _ := strings.Cut(line, " ")
 	pargs, err := parseArgs(args)
-	if err != nil {
-		return false, err
+	if errors.Is(err, ErrUnclosedSingleQuote) {
+		fmt.Fprintf(out, "error: %v\n", ErrUnclosedSingleQuote.Error())
+		return false, nil
 	}
 
 	switch command {

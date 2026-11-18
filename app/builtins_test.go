@@ -44,6 +44,10 @@ func TestType(t *testing.T) {
 			input: []string{"pwd"},
 			want:  "pwd is a shell builtin\n",
 		},
+		"WithBuiltinCdTyp": {
+			input: []string{"cd"},
+			want:  "cd is a shell builtin\n",
+		},
 		"WithMulitpleBuitinCommandType": {
 			input: []string{"type", "echo"},
 			want:  "type is a shell builtin\necho is a shell builtin\n",
