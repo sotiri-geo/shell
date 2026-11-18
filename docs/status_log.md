@@ -340,5 +340,19 @@ My issue here is that we are dealing with parsing the argument rather than the c
 * Parser ignores empty single quotes
 * Refactor command handlers to accept pargs (parsed args as an array)
 
-## TODO
+## TODO - Massive refactor
+
+* Consider a cleaner approach to parsing args: two pointers may work
+* Break down the routing options between builtin and external within execute. It should not know about each command handler directly, rather rerouting 
+
+Keep the switch for now. The routing has drifted because execute and type each keep their own list of builtins. The parser has a different problem: it decides too early that it has finished an argument. I’d tackle those in separate changes so you can tell what each refactor buys you.
+
+1. Give execute and type one way to recognise a builtin. execute handles cd, but the list inside handleType omits it. I confirmed that type cd reports /usr/bin/cd on your machine. Before introducing a handler registry, ask what the two callers actually need to share. type needs to know whether a name is a builtin. execute also needs to invoke it. A focused type cd test with an empty PATH would expose the mismatch without depending on what’s installed. execute (app/main.go:18) · handleType (app/builtins.go:27)
+2. Consider a small command struct when parsing owns the whole line. A name and an argument slice make a reasonable value to pass from parsing to dispatch. The test for whether it earns its place is whether execute can receive that value and work entirely with parsed input. If it only wraps two locals inside execute, I’d defer it. It can start as a plain struct with two fields.
+3. Simplify the parser around one question: when is an argument complete? I ran echo pre'x y'post through your shell and got pre x y post, with spaces inserted around the quoted fragment. In /bin/sh, pre'x y'post forms one argument, prex ypost. Trace that input by hand and distinguish “I’ve finished a quoted fragment” from “I’ve finished the whole argument.” That distinction gives you a way to remove the special cases that go back and edit the last emitted argument. I also reproduced a hang on an unmatched quote, so keep your earlier loop question handy: after each iteration, did the parser consume input or stop? parseArgs (app/parser.go:11)
+
+One testing tip before moving the code: your external-command test fixture currently expands its arguments unquoted. If you use it to test quoting, the fixture can split an argument that your Go code passed correctly. Have the fixture print one delimited value per argument using "$@", then send it a quoted argument containing spaces through execute. That checks a boundary that echo output can hide. External command test fixture (app/external_test.go:80)
+
+The current suite passes. If you want to start with routing, I’d start with the type cd test and see how little code you need to make both callers agree.
+
 
