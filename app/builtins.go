@@ -15,16 +15,16 @@ const (
 )
 
 // handleEcho will write args directly to out
-func handleEcho(args string, out io.Writer) error {
+func handleEcho(args []string, out io.Writer) error {
 	// Using Fprintf for consistency so its obvious when printing a new line
-	_, err := fmt.Fprintf(out, "%s\n", strings.TrimSpace(args))
+	_, err := fmt.Fprintf(out, "%s\n", strings.Join(args, " "))
 	return err
 }
 
 // handleType will separate args by whitespace
 // and loop over each string, writing to out whether
 // its an identifiable builtin command or not recognised
-func handleType(args string, out io.Writer) error {
+func handleType(args []string, out io.Writer) error {
 	builtinTypes := map[string]bool{
 		"echo": true,
 		"exit": true,
@@ -32,7 +32,7 @@ func handleType(args string, out io.Writer) error {
 		"pwd":  true,
 	}
 	var err error
-	for arg := range strings.SplitSeq(strings.TrimSpace(args), " ") {
+	for _, arg := range args {
 		if builtinTypes[arg] {
 			_, err = fmt.Fprintf(out, "%s is a shell builtin\n", arg)
 			if err != nil {

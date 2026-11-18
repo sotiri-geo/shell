@@ -13,7 +13,7 @@ func TestEcho(t *testing.T) {
 	var output bytes.Buffer
 	want := "hello world\n"
 
-	err := handleEcho("hello world", &output)
+	err := handleEcho([]string{"hello", "world"}, &output)
 	if err != nil {
 		t.Fatalf("should not error: %v", err)
 	}
@@ -25,43 +25,43 @@ func TestEcho(t *testing.T) {
 
 func TestType(t *testing.T) {
 	testCase := map[string]struct {
-		input string
+		input []string
 		want  string
 	}{
 		"WithBuitinCommandEcho": {
-			input: "echo",
+			input: []string{"echo"},
 			want:  "echo is a shell builtin\n",
 		},
 		"WithBuitinCommandExit": {
-			input: "exit",
+			input: []string{"exit"},
 			want:  "exit is a shell builtin\n",
 		},
 		"WithBuitinCommandType": {
-			input: "type",
+			input: []string{"type"},
 			want:  "type is a shell builtin\n",
 		},
 		"WithBuilinCommandPwd": {
-			input: "pwd",
+			input: []string{"pwd"},
 			want:  "pwd is a shell builtin\n",
 		},
 		"WithMulitpleBuitinCommandType": {
-			input: "type echo",
+			input: []string{"type", "echo"},
 			want:  "type is a shell builtin\necho is a shell builtin\n",
 		},
 		"WithUnknownCommand": {
-			input: "invalid_command",
+			input: []string{"invalid_command"},
 			want:  "invalid_command: not found\n",
 		},
 		"WithKnownAndUnknownCommand": {
-			input: "echo invalid_command",
+			input: []string{"echo", "invalid_command"},
 			want:  "echo is a shell builtin\ninvalid_command: not found\n",
 		},
 		"WithUnknownAndKnownCommand": {
-			input: "invalid_command echo",
+			input: []string{"invalid_command", "echo"},
 			want:  "invalid_command: not found\necho is a shell builtin\n",
 		},
 		"WithUnKnownAndUnknownCommand": {
-			input: "invalid_command banana",
+			input: []string{"invalid_command", "banana"},
 			want:  "invalid_command: not found\nbanana: not found\n",
 		},
 	}
@@ -99,7 +99,7 @@ func TestTypeReturnsExecutable(t *testing.T) {
 
 	var output bytes.Buffer
 	// WHEN calling handleType with mytool
-	if err := handleType("mytool", &output); err != nil {
+	if err := handleType([]string{"mytool"}, &output); err != nil {
 		t.Fatalf("handleType: %v", err)
 	}
 

@@ -331,9 +331,14 @@ My issue here is that we are dealing with parsing the argument rather than the c
 * Add test that shows empty quotes are ignored hello''world goes to helloworld
 * Create one integration test that proves the command handlers are recieving the parsed args before processing
 * Wire it all up to the execute
- 
-## TODO
 
-* Think: Consider the boundaries of how execute understands to route requests: Does it need to know about the individual handlers to call? 
-* Think: parseArgs has a convoluted way of iterating through each character with nested for loops. Can we abstract this cleanly in the event we want to extend this helper? Could it be done better with an object and mutable methods which handle smaller pieces of work?
+## 18-11-26
+
+## Completed
+* Parser preserves whitespace with single quotes 
+* Parser concatenates empty single quotes between characters
+* Parser ignores empty single quotes
+* Refactor command handlers to accept pargs (parsed args as an array)
+
+## TODO
 

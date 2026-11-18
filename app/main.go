@@ -13,19 +13,19 @@ import (
 // the exit command was requested and any errors when writing output to writer.
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	command, args, _ := strings.Cut(line, " ")
-	args = parseArgs(args)
+	pargs := parseArgs(args)
 
 	switch command {
 	case "exit":
 		return true, nil
 	case "echo":
-		err = handleEcho(args, out)
+		err = handleEcho(pargs, out)
 	case "type":
-		err = handleType(args, out)
+		err = handleType(pargs, out)
 	case "pwd":
 		err = handlePwd(out)
 	case "cd":
-		err = handleCd(args, out)
+		err = handleCd(pargs[0], out)
 	// Run external command found in $PATH
 	default:
 		found, err := runCommand(command, out, strings.Split(strings.TrimSpace(args), " ")...)
