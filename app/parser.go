@@ -31,12 +31,15 @@ func parseArgs(args string) ([]string, error) {
 					// this can sometimes go all the way till end of string if sep not found
 					if len(output) > 0 {
 						start := end + 1
+						if args[start] == '\'' {
+							i = start
+							continue
+						}
 						if end, found := getClosingIndex(start, ' ', args); found {
 							output[len(output)-1] = output[len(output)-1] + args[start:end]
 						} else {
-							// loop back
-							i = start
-							continue
+							output[len(output)-1] = output[len(output)-1] + args[start:]
+							break
 						}
 					}
 				}

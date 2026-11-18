@@ -15,9 +15,8 @@ import (
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	command, args, _ := strings.Cut(line, " ")
 	pargs, err := parseArgs(args)
-	if errors.Is(err, ErrUnclosedSingleQuote) {
-		fmt.Fprintf(out, "error: %v\n", ErrUnclosedSingleQuote.Error())
-		return false, nil
+	if err != nil {
+		return false, err
 	}
 
 	switch command {
@@ -78,6 +77,14 @@ func run(in io.Reader, out io.Writer) error {
 			continue
 		}
 		shouldExit, execErr := execute(line, out)
+
+		if errors.Is(execErr, ErrUnclosedSingleQuote) {
+			if _, writeErr := fmt.Fprintf(out, "error: %s\n", ErrUnclosedSingleQuote.Error()); writeErr != nil {
+				return writeErr
+			}
+			continue
+		}
+
 		if execErr != nil {
 			return execErr
 		}
