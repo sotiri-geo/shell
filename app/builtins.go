@@ -24,12 +24,14 @@ func handleEcho(args []string, out io.Writer) error {
 // handleType will separate args by whitespace
 // and loop over each string, writing to out whether
 // its an identifiable builtin command or not recognised
+// The builtinTypes table must be consistent with whats matched in execute()
 func handleType(args []string, out io.Writer) error {
 	builtinTypes := map[string]bool{
 		"echo": true,
 		"exit": true,
 		"type": true,
 		"pwd":  true,
+		"cd":   true,
 	}
 	var err error
 	for _, arg := range args {

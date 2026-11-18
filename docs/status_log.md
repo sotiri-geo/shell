@@ -342,6 +342,7 @@ My issue here is that we are dealing with parsing the argument rather than the c
 * Stop the parser from hanging. echo 'unclosed currently leaves the shell stuck. Decide what it should do for this stage, then check that it returns promptly. As you trace the loop, ask whether every branch advances the input or stops parsing. The end desition was to return early and return an error with no closing quote found.
 * make the closing quote graceful and log out error but not exit program
 * Currently hello'''world prints hello'world instead of returning early
+* Test edgecase empty quote at end of args
 
 ## TODO - Massive refactor
 
