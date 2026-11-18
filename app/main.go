@@ -13,7 +13,10 @@ import (
 // the exit command was requested and any errors when writing output to writer.
 func execute(line string, out io.Writer) (shouldExit bool, err error) {
 	command, args, _ := strings.Cut(line, " ")
-	pargs := parseArgs(args)
+	pargs, err := parseArgs(args)
+	if err != nil {
+		return false, err
+	}
 
 	switch command {
 	case "exit":

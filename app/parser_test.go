@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"slices"
 	"testing"
 )
@@ -26,8 +27,10 @@ func TestParserUnquoted(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			got := parseArgs(tc.input)
-
+			got, err := parseArgs(tc.input)
+			if err != nil {
+				t.Fatalf("should not error: %v", err)
+			}
 			if !slices.Equal(got, tc.want) {
 				t.Errorf("got %+v, want %+v", got, tc.want)
 			}
@@ -72,12 +75,31 @@ func TestParserSingleQuoted(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			got := parseArgs(tc.input)
+			got, err := parseArgs(tc.input)
+			if err != nil {
+				t.Fatalf("should not error: %v", err)
+			}
 
 			if !slices.Equal(got, tc.want) {
 				t.Errorf("got %+v, want %+v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestParserUnclosedSingleQuotes(t *testing.T) {
+	// GIVEN an unclosed single quote inpute i1
+	input := "'"
+
+	// WHEN parsing input
+	got, err := parseArgs(input)
+
+	if got != nil {
+		t.Fatalf("should be nil")
+	}
+	// THEN error unmatched closing quote
+	if !errors.Is(err, ErrUnclosedSingleQuote) {
+		t.Errorf("unclosed single quote: %v", err)
 	}
 }
 

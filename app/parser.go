@@ -1,6 +1,10 @@
 package main
 
-func parseArgs(args string) []string {
+import "errors"
+
+var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
+
+func parseArgs(args string) ([]string, error) {
 	output := []string{}
 	// Identify each word within a single quote
 	// when we identify a single quote, we essentially need to traverse until we find
@@ -35,6 +39,8 @@ func parseArgs(args string) []string {
 				}
 				// move to the char next to the closing quote
 				i = end + 1
+			} else {
+				return nil, ErrUnclosedSingleQuote
 			}
 			continue
 		}
@@ -61,7 +67,7 @@ func parseArgs(args string) []string {
 		i++
 	}
 
-	return output
+	return output, nil
 }
 
 func getClosingIndex(start int, sep byte, args string) (end int, found bool) {
