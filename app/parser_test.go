@@ -88,18 +88,20 @@ func TestParserSingleQuoted(t *testing.T) {
 }
 
 func TestParserUnclosedSingleQuotes(t *testing.T) {
-	// GIVEN an unclosed single quote inpute i1
-	input := "'"
-
-	// WHEN parsing input
-	got, err := parseArgs(input)
-
-	if got != nil {
-		t.Fatalf("should be nil")
+	testCases := map[string]string{
+		"LoneOpeningQuote": "'",
+		"AfterEmptyQuotes": "hello'''world",
 	}
-	// THEN error unmatched closing quote
-	if !errors.Is(err, ErrUnclosedSingleQuote) {
-		t.Errorf("unclosed single quote: %v", err)
+	for name, input := range testCases {
+		t.Run(name, func(t *testing.T) {
+			got, err := parseArgs(input)
+			if !errors.Is(err, ErrUnclosedSingleQuote) {
+				t.Errorf("got error: %v, want: %v", err, ErrUnclosedSingleQuote)
+			}
+			if got != nil {
+				t.Errorf("got %v, want %v", got, nil)
+			}
+		})
 	}
 }
 

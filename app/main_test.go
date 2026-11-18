@@ -275,9 +275,9 @@ func TestRun(t *testing.T) {
 
 	t.Run("WithUnclosedSingleQuoteRecovers", func(t *testing.T) {
 		var output bytes.Buffer
-		want := "$ error: closing single quote not found\n$ "
+		want := "$ error: closing single quote not found\n$ still running\n$ "
 
-		err := run(strings.NewReader("echo '\n"), &output)
+		err := run(strings.NewReader("echo 'unclosed\necho still running\n"), &output)
 		if err != nil {
 			t.Fatalf("should not error: %v", err)
 		}

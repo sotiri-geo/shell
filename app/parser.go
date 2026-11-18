@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
 
@@ -32,8 +34,9 @@ func parseArgs(args string) ([]string, error) {
 						if end, found := getClosingIndex(start, ' ', args); found {
 							output[len(output)-1] = output[len(output)-1] + args[start:end]
 						} else {
-							output[len(output)-1] = output[len(output)-1] + args[start:]
-							break
+							// loop back
+							i = start
+							continue
 						}
 					}
 				}
