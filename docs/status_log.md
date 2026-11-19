@@ -349,3 +349,33 @@ My issue here is that we are dealing with parsing the argument rather than the c
 ## Completed
 
 * Refactor parseArgs and simplify the logic. Adding description where behaviour is not obvious.
+
+## Context - Double Quotes
+
+GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
+
+* Most characters with "" (Double-Quotes) are treated literally
+* Some characters get interpreted - $, \ (escaping)
+
+## Contract - Within Double-Quotes
+
+* Consecutive whitespace (inc. spaces, tabs) must be preserved
+* Characters that act as delimiters or special characters lose their special meaning inside double quotes and are treated literally.
+* Double-Quoted strings placed adjacent to each other are concatenated to form a single argument.
+* Double-Quoted and unquoted strings placed next to eachother are also concatenated
+
+## TODO 
+
+First exersize is to create a set of behavioural tests based off the contract defined above for double quotes. Implementation can be done incrementally with a TDD approach:
+
+### Test construction
+
+TestDoubleQuotes:
+
+* WithMulipleWhiteSpacePreserved - "hello   world"
+* WithAdjacentQuotesConcatenated - hello""world
+* WithQuotedAndUnquotedAdjacent - "hello"world
+* WithUnquotedAndQuotedAdjacent - hello"world"
+* WithQuotedSeparatedByWhitespace - "hello" "world"
+* ContainingSingleQuotes - "sotiri's test"
+
