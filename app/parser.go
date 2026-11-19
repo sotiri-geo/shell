@@ -41,7 +41,6 @@ func parseArgs(args string) ([]string, error) {
 	// The traversal continues until the following conditions are met, which we then flush to output slice:
 	// 1. End of string
 	// 2. Closing quote
-	// h e l l o ' '
 	var arg strings.Builder
 	for end < len(args) {
 		if args[end] == '\'' {

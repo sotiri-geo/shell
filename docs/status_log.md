@@ -344,7 +344,8 @@ My issue here is that we are dealing with parsing the argument rather than the c
 * Currently hello'''world prints hello'world instead of returning early
 * Test edgecase empty quote at end of args
 
-## TODO - Massive refactor
+## 19-11-26
 
+## Completed
 
-4. Revisit the command struct. If parsing now owns the whole line and passes a name plus []string to dispatch, the struct can make that boundary explicit. If it would just replace two local variables inside execute, leave it for later.
+* Refactor parseArgs and simplify the logic. Adding description where behaviour is not obvious.
