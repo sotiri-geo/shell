@@ -7,13 +7,18 @@ import (
 
 var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
 
+const (
+	SingleQuote = '\''
+	WhiteSpace  = ' '
+)
+
 // parseArgs preserves text inside single quotes and separates arguments at unquoted spaces.
 func parseArgs(args string) ([]string, error) {
 	output := []string{}
 	var arg strings.Builder
 	end := 0
 	for end < len(args) {
-		if args[end] == '\'' {
+		if args[end] == SingleQuote {
 			closing, found := getClosingIndex(end, '\'', args)
 			if !found {
 				return nil, ErrUnclosedSingleQuote
@@ -33,7 +38,7 @@ func parseArgs(args string) ([]string, error) {
 			}
 			// Traverse until exhausted non-whitespace characters
 			for end < len(args) {
-				if args[end] != ' ' {
+				if args[end] != WhiteSpace {
 					break
 				}
 				end++
