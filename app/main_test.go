@@ -36,6 +36,28 @@ func TestCommandRecievesParsedArgs(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("ExternalPreservesArgumentBoundaries", func(t *testing.T) {
+		dir := t.TempDir()
+		executable := filepath.Join(dir, "print_args")
+		script := "#!/bin/sh\nprintf '<%s>\\n' \"$@\"\n"
+		if err := os.WriteFile(executable, []byte(script), PermExecutable); err != nil {
+			t.Fatalf("create executable fixture: %v", err)
+		}
+		t.Setenv("PATH", dir)
+
+		var output bytes.Buffer
+		shouldExit, err := execute("print_args 'x y' z", &output)
+		if err != nil {
+			t.Fatalf("execute: %v", err)
+		}
+		if shouldExit {
+			t.Fatal("external command should not exit the shell")
+		}
+		if got, want := output.String(), "<x y>\n<z>\n"; got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestRoutingCommand(t *testing.T) {

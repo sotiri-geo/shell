@@ -23,6 +23,10 @@ func TestParserUnquoted(t *testing.T) {
 			input: "hello    world",
 			want:  []string{"hello", "world"},
 		},
+		"OnlySeparators": {
+			input: "   ",
+			want:  []string{},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -51,9 +55,17 @@ func TestParserSingleQuoted(t *testing.T) {
 			input: "'hello    world'",
 			want:  []string{"hello    world"},
 		},
+		"PreservesWhitespaceAtQuotedEdges": {
+			input: "' \tx\t '",
+			want:  []string{" \tx\t "},
+		},
 		"SingleEmptyQuotes": {
 			input: "''",
 			want:  []string{},
+		},
+		"IgnoresStandaloneEmptyQuotesBetweenArgs": {
+			input: "left '' right",
+			want:  []string{"left", "right"},
 		},
 		"PreservesSpecialCharacters": {
 			input: "'$%!~\\'",
@@ -71,6 +83,10 @@ func TestParserSingleQuoted(t *testing.T) {
 			input: "'hello'   'world'",
 			want:  []string{"hello", "world"},
 		},
+		"CombinesQuotedAndUnquotedFragments": {
+			input: "pre'x y'post next",
+			want:  []string{"prex ypost", "next"},
+		},
 		"WithEmptyQuotesIgnoredAtEnd": {
 			input: "helloworld''",
 			want:  []string{"helloworld"},
@@ -85,7 +101,7 @@ func TestParserSingleQuoted(t *testing.T) {
 			}
 
 			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %+v, want %+v", got, tc.want)
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}

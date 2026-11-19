@@ -2,80 +2,95 @@ package main
 
 import (
 	"errors"
+	"strings"
 )
 
 var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
+
+// validateArgs verifies that the argument is parseable. Currently, this is defined that
+// an open single quote is followed by a closing single quote.
+func validateArgs(args string) error {
+	count := 0
+
+	for _, chr := range args {
+		if chr == '\'' {
+			count++
+		}
+	}
+
+	if count%2 != 0 {
+		return ErrUnclosedSingleQuote
+	}
+	return nil
+}
 
 // parseArgs will preseve the characters inside the single quotes as per the GNU docs. Args that
 // are defined outside this boundary are separated by whitespace.
 func parseArgs(args string) ([]string, error) {
 	output := []string{}
-	// Identify each word within a single quote
-	// when we identify a single quote, we essentially need to traverse until we find
-	// a closing quote, whilst preserving the characters found.
+	// Vaidate that for an open quote has a closing quote
+	if err := validateArgs(args); err != nil {
+		return nil, err
+	}
 
-	i := 0
-	// Behaves like a while loop
-	for i < len(args) {
-		// Handle single quotes in a single batch
-		if args[i] == '\'' {
-			if end, found := getClosingIndex(i, '\'', args); found {
-				if i+1 < end {
-					// We can also concat if we discover no whitespace between two single quotes
-					// e.g. 'hello''world' -> "helloworld"
-					if i > 0 && args[i-1] == args[i] {
-						output[len(output)-1] = output[len(output)-1] + args[i+1:end]
-					} else {
-						output = append(output, args[i+1:end])
+	start, end := 0, 0
+	// The reconstruction of an arg begins as an empty string buffer. We grow the buffer by the following rules:
+	// 1. non-quoted characters
+	// 2. non-whitespace characters
+	//
+	// The traversal continues until the following conditions are met, which we then flush to output slice:
+	// 1. End of string
+	// 2. Closing quote
+	// h e l l o ' '
+	var arg strings.Builder
+	for end < len(args) {
+		if args[end] == '\'' {
+			// Start measuring from the moment we inspect the first open quote
+			start = end
+			end++
+			for end < len(args) {
+				if args[end] == '\'' {
+					if end-start > 1 {
+						arg.WriteString(args[start+1 : end])
 					}
-				} else {
-					// zero length quotes triggers a concat with previous word found
-					// this can sometimes go all the way till end of string if sep not found
-					if len(output) > 0 {
-						start := end + 1
-						if start >= len(args) {
-							break
-						}
-						if args[start] == '\'' {
-							i = start
-							continue
-						}
-						if end, found := getClosingIndex(start, ' ', args); found {
-							output[len(output)-1] = output[len(output)-1] + args[start:end]
-						} else {
-							output[len(output)-1] = output[len(output)-1] + args[start:]
-							break
-						}
-					}
-				}
-				// move to the char next to the closing quote
-				i = end + 1
-			} else {
-				return nil, ErrUnclosedSingleQuote
-			}
-			continue
-		}
-		// We now need to handle non-quoted chacacters that are not whitespace
-		if args[i] != ' ' {
-			// Walk up to a whitespace or a single quote
-			start := i
-			for i < len(args) {
-				// Break out of current buffer and flush
-				if args[i] == ' ' || args[i] == '\'' {
-					output = append(output, args[start:i])
+					// empty '' is effectively ignored
 					break
 				}
-				i++
+				end++
 			}
-
-			// If exhausted all characters: flush to buffer
-			if i == len(args) {
-				output = append(output, args[start:i])
-			}
-
+			// move cursor to the next character after closing quote
+			// e.g. 'abc'd
+			//           ^ (start = end)
+			end++
+			start = end
 			continue
 		}
-		i++
+
+		if args[end] == ' ' {
+			// if there is existing arg - flush to output
+			if arg.Len() > 0 {
+				output = append(output, arg.String())
+				arg.Reset()
+				continue
+			}
+			// Traverse until exhausted non-whitespace characters
+			for end < len(args) {
+				if args[end] != ' ' {
+					break
+				}
+				end++
+			}
+			start = end
+			continue
+		}
+
+		// Continue to grow buffer
+		arg.WriteByte(args[end])
+		end++
+	}
+	// Flush remaining arg
+	if arg.Len() > 0 {
+		output = append(output, arg.String())
 	}
 
 	return output, nil
