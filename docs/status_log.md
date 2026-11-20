@@ -370,6 +370,8 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 * WithMulipleWhiteSpacePreserved - "hello   world"
 * WithAdjacentQuotesConcatenated - hello""world
+* WithQuotedAndUnquotedAdjacent - "hello"world
+* WithUnquotedAndQuotedAdjacent - hello"world"
 
 ## TODO 
 
@@ -379,8 +381,6 @@ First exersize is to create a set of behavioural tests based off the contract de
 
 TestDoubleQuotes:
 
-* WithQuotedAndUnquotedAdjacent - "hello"world
-* WithUnquotedAndQuotedAdjacent - hello"world"
 * WithQuotedSeparatedByWhitespace - "hello" "world"
 * ContainingSingleQuotes - "sotiri's test"
 
