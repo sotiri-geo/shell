@@ -372,15 +372,5 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 * WithAdjacentQuotesConcatenated - hello""world
 * WithQuotedAndUnquotedAdjacent - "hello"world
 * WithUnquotedAndQuotedAdjacent - hello"world"
-
-## TODO 
-
-First exersize is to create a set of behavioural tests based off the contract defined above for double quotes. Implementation can be done incrementally with a TDD approach:
-
-### Test construction
-
-TestDoubleQuotes:
-
 * WithQuotedSeparatedByWhitespace - "hello" "world"
 * ContainingSingleQuotes - "sotiri's test"
-

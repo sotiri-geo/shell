@@ -155,6 +155,11 @@ func TestParserDoubleQuoted(t *testing.T) {
 			input: "\"hello\" \"world\"",
 			want:  []string{"hello", "world"},
 		},
+		"ContainingSingleQuotes": {
+			// GIVEN arg with single quote contained inside double quote
+			input: "\"sotiri's test\"",
+			want:  []string{"sotiri's test"},
+		},
 	}
 
 	for name, tc := range testCases {
