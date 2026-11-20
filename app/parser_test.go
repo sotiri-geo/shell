@@ -150,6 +150,11 @@ func TestParserDoubleQuoted(t *testing.T) {
 			input: "hello\"world\"",
 			want:  []string{"helloworld"},
 		},
+		"WithQuotedSeparatedByWhitespace": {
+			// GIVEN arg with double quoted text separated by whitespace
+			input: "\"hello\" \"world\"",
+			want:  []string{"hello", "world"},
+		},
 	}
 
 	for name, tc := range testCases {
