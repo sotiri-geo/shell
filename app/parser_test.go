@@ -140,6 +140,11 @@ func TestParserDoubleQuoted(t *testing.T) {
 			input: "hello\"\"world",
 			want:  []string{"helloworld"},
 		},
+		"WithQuotedAndUnquotedAdjacent": {
+			// GIVEN arg with double quoted text next to unquoted text
+			input: "\"hello\"world",
+			want:  []string{"helloworld"},
+		},
 	}
 
 	for name, tc := range testCases {
