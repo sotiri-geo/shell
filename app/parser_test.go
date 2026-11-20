@@ -135,11 +135,11 @@ func TestParserDoubleQuoted(t *testing.T) {
 			input: "\"hello   world\"",
 			want:  []string{"hello   world"},
 		},
-		// "WithAdjacentQuotesConcatenated": {
-		// 	// GIVEN arg with double quotes next to eachother
-		// 	input: "hello\"\"world",
-		// 	want:  []string{"helloworld"},
-		// },
+		"WithAdjacentQuotesConcatenated": {
+			// GIVEN arg with double quotes next to eachother
+			input: "hello\"\"world",
+			want:  []string{"helloworld"},
+		},
 	}
 
 	for name, tc := range testCases {

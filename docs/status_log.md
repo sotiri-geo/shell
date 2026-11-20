@@ -364,6 +364,13 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 * Double-Quoted strings placed adjacent to each other are concatenated to form a single argument.
 * Double-Quoted and unquoted strings placed next to eachother are also concatenated
 
+## 20-11-26
+
+## Completed
+
+* WithMulipleWhiteSpacePreserved - "hello   world"
+* WithAdjacentQuotesConcatenated - hello""world
+
 ## TODO 
 
 First exersize is to create a set of behavioural tests based off the contract defined above for double quotes. Implementation can be done incrementally with a TDD approach:
@@ -372,8 +379,6 @@ First exersize is to create a set of behavioural tests based off the contract de
 
 TestDoubleQuotes:
 
-* WithMulipleWhiteSpacePreserved - "hello   world"
-* WithAdjacentQuotesConcatenated - hello""world
 * WithQuotedAndUnquotedAdjacent - "hello"world
 * WithUnquotedAndQuotedAdjacent - hello"world"
 * WithQuotedSeparatedByWhitespace - "hello" "world"
