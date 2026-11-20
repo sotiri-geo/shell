@@ -9,6 +9,7 @@ var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
 
 const (
 	SingleQuote = '\''
+	DoubleQuote = '"'
 	WhiteSpace  = ' '
 )
 
@@ -18,7 +19,8 @@ func parseArgs(args string) ([]string, error) {
 	var arg strings.Builder
 	end := 0
 	for end < len(args) {
-		if args[end] == SingleQuote {
+		switch args[end] {
+		case SingleQuote:
 			closing, found := getClosingIndex(end, '\'', args)
 			if !found {
 				return nil, ErrUnclosedSingleQuote
@@ -26,10 +28,7 @@ func parseArgs(args string) ([]string, error) {
 
 			arg.WriteString(args[end+1 : closing])
 			end = closing + 1
-			continue
-		}
-
-		if args[end] == ' ' {
+		case WhiteSpace:
 			// if there is existing arg - flush to output
 			if arg.Len() > 0 {
 				output = append(output, arg.String())
@@ -43,12 +42,12 @@ func parseArgs(args string) ([]string, error) {
 				}
 				end++
 			}
-			continue
-		}
+		default:
+			// Continue to grow buffer
+			arg.WriteByte(args[end])
+			end++
 
-		// Continue to grow buffer
-		arg.WriteByte(args[end])
-		end++
+		}
 	}
 	// Flush remaining arg
 	if arg.Len() > 0 {
