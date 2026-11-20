@@ -368,9 +368,33 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 ## Completed
 
+**Double-Quotes**
+
 * WithMulipleWhiteSpacePreserved - "hello   world"
 * WithAdjacentQuotesConcatenated - hello""world
 * WithQuotedAndUnquotedAdjacent - "hello"world
 * WithUnquotedAndQuotedAdjacent - hello"world"
 * WithQuotedSeparatedByWhitespace - "hello" "world"
 * ContainingSingleQuotes - "sotiri's test"
+
+**Backslash**
+
+## Context - Backslash Escaping
+
+* When using `\` outised of quotes, it acts as an escape character.
+* The backslash removes any special meaning to the next character and treats it as a literal character
+* Also note after escaping, the backslash itself is removed by the parser 
+* This is useful when you want to interpret special characters literally like \' or \$ or \" and othe delimiters etc
+* Also includes without special meaning like `n`, `t` etc
+
+## Contract - Backslash outside quotes
+
+* ANY character which follows from a backslash '\' is escaped - meaning its literal characte is preserved.
+
+## TODO Tests followed by implementation (TDD) - TestBackslashEscaped
+
+* WithMultilpeWhitespacePreserved - "three \ \ \ spaces"
+* WithSingleWhitespacePreservedAndRemainingCollapsed - "before\   after"
+* WithAlphaCharacterNoOp - "test\nexample"
+* WithEscapingBackslash - "hello\\world"
+* WithEscapingSpecialCharacters - "\'\"\$\*\&\?"

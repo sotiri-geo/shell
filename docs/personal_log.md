@@ -39,6 +39,8 @@ the test is closely related to the other tests, just add another t.Run() under t
 * When working on parsing single quotes, the question came up as to where this responsibility belonged.
 * What should the command handler need to know about how the user wrote its original args. Should it need to be able to understand how to parsing single quotes, or is this agnositic to all commands. In this case, does the responsibility belong to the caller?
 * Big question: How can you test that the shell ACTUALLY preserved the boundary within single quotes. Doing thing inside echo command can mask the underlinning operations. i.e. echo 'helloworld' and echo hello''world would return the same response, so it doesn't PROVE that the parsing actually occurred.
+  * We are more concerned with WHAT was passed into echo i.e. did 'helloworld' and hello''world both resolve as helloworld before being
+    dipatched to the echoHandler?
 
 ## Terminology
 
