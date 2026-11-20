@@ -125,6 +125,39 @@ func TestParserUnclosedSingleQuotes(t *testing.T) {
 	}
 }
 
+func TestParserDoubleQuoted(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  []string
+	}{
+		"WithMulipleWhiteSpacePreserved": {
+			// GIVEN arg with consecutive whitespace
+			input: "\"hello   world\"",
+			want:  []string{"hello   world"},
+		},
+		// "WithAdjacentQuotesConcatenated": {
+		// 	// GIVEN arg with double quotes next to eachother
+		// 	input: "hello\"\"world",
+		// 	want:  []string{"helloworld"},
+		// },
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			// WHEN invoking parseArgs with a1
+			got, err := parseArgs(tc.input)
+			// THEN no error with correct output
+			if err != nil {
+				t.Fatalf("should not error: %v", err)
+			}
+
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestClosingIndex(t *testing.T) {
 	testCases := map[string]struct {
 		start  int

@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-var ErrUnclosedSingleQuote = errors.New("closing single quote not found")
+var (
+	ErrUnclosedSingleQuote = errors.New("closing single quote not found")
+	ErrUnclosedDoubleQuote = errors.New("closing double quote not found")
+)
 
 const (
 	SingleQuote = '\''
@@ -21,7 +24,15 @@ func parseArgs(args string) ([]string, error) {
 	for end < len(args) {
 		switch args[end] {
 		case SingleQuote:
-			closing, found := getClosingIndex(end, '\'', args)
+			closing, found := getClosingIndex(end, SingleQuote, args)
+			if !found {
+				return nil, ErrUnclosedSingleQuote
+			}
+
+			arg.WriteString(args[end+1 : closing])
+			end = closing + 1
+		case DoubleQuote:
+			closing, found := getClosingIndex(end, DoubleQuote, args)
 			if !found {
 				return nil, ErrUnclosedSingleQuote
 			}
