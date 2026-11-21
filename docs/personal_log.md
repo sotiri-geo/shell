@@ -49,3 +49,21 @@ With reference to the execute command, we've discussed this difference in the sw
 * Dispatcher - emphasises handing off the work to the designated handler to be invoked i.e. "echo" matches to the "echoHandler"
 
 Both of these often happen at the same time. If you split these two into separaet functions - a lookup could return the handler (router) and the dispatcher could call that handler. However, in this codebase I would say "execute dispatches commands", the term describes what the code does, regardless of the implementation.
+
+## Effectively naming tests
+
+Name each table case after the behaviour you’d want to see in the failure log. The input shows how you trigger it, and the assertion shows the exact result. The name tells the reader why the case exists.
+
+For your parser tests:
+
+| Less helpful | Better | What the better name tells you |
+|---|---|---|
+| WithThreeBackslashes | KeepsEscapedSpacesInOneArgument | The test checks whether escaped spaces split an argument. |
+| WithAdjacentQuotes | ConcatenatesAdjacentQuotedFragments | The fragments should form a single argument. |
+| WithUnclosedSingleQuote | RejectsUnclosedSingleQuote | The parser should return an error. |
+| WithUnclosedSingleQuote under TestRun | ContinuesAfterUnclosedSingleQuote | The shell should execute the next command. |
+| WithWhitespace | PreservesWhitespaceInsideDoubleQuotes | Both the kind of whitespace behaviour and where it applies are clear. |
+
+The two unmatched quote cases are a good example. The same input can exercise different responsibilities. A parser test can prove the error is returned. A REPL test earns ContinuesAfterUnclosedSingleQuote by sending a second command and checking its output. If it only checks the diagnostic, ReportsUnclosedSingleQuote is the more accurate name.
+
+When you’re stuck on a name, write this sentence first: “If this test fails, it means the parser no longer ___.” For three\ \ \ spaces, you might fill in “keeps escaped spaces in one argument.” That gives you KeepsEscapedSpacesInOneArgument. If you can only fill in “handles three backslashes,” ask what distinguishes the correct result from the likely bug. That distinction is what belongs in the name.
