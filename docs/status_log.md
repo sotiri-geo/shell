@@ -402,7 +402,7 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 * WithSingleWhitespacePreservedAndRemainingCollapsed - "before\   after"
 * WithAlphaCharacterNoOp - "test\nexample"
 * WithEscapingBackslash - "hello\\world"
-
-## TODO Tests followed by implementation (TDD) - TestBackslashEscape
-
 * WithEscapingSpecialCharacters - "\'\"\$\*\&\?"
+
+## TODO Tests followed by implementation (TDD) 
+
