@@ -178,6 +178,38 @@ func TestParserDoubleQuoted(t *testing.T) {
 	}
 }
 
+func TestParserBackslashEscape(t *testing.T) {
+	testCases := map[string]struct {
+		input string
+		want  []string
+	}{
+		// GIVEN arg with 3 escaped whitespaces are presere
+		"WithMultilpeWhitespacePreserved": {
+			input: `three\ \ \ spaces`,
+			want:  []string{"three   spaces"},
+		},
+		"WithSingleWhitespaceNotEscapedAndRemainingEscaped": {
+			input: `three \ \ \ spaces`,
+			want:  []string{"three", "   spaces"},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			// WHEN invoking parseArgs with a1
+			got, err := parseArgs(tc.input)
+			// THEN no error with correct output
+			if err != nil {
+				t.Fatalf("should not error: %v", err)
+			}
+
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestClosingIndex(t *testing.T) {
 	testCases := map[string]struct {
 		start  int

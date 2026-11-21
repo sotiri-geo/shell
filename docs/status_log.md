@@ -377,7 +377,6 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 * WithQuotedSeparatedByWhitespace - "hello" "world"
 * ContainingSingleQuotes - "sotiri's test"
 
-**Backslash**
 
 ## Context - Backslash Escaping
 
@@ -391,9 +390,18 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 * ANY character which follows from a backslash '\' is escaped - meaning its literal characte is preserved.
 
-## TODO Tests followed by implementation (TDD) - TestBackslashEscaped
 
-* WithMultilpeWhitespacePreserved - "three \ \ \ spaces"
+## 21-11-26
+
+## Completed
+
+**Backslash**
+
+* WithMultilpeWhitespacePreserved - "three\ \ \ spaces"
+* WithSingleWhitespaceNotEscapedAndRemainingEscaped- "three \ \ \ spaces" -> "three", "   spaces"
+
+## TODO Tests followed by implementation (TDD) - TestBackslashEscape
+
 * WithSingleWhitespacePreservedAndRemainingCollapsed - "before\   after"
 * WithAlphaCharacterNoOp - "test\nexample"
 * WithEscapingBackslash - "hello\\world"

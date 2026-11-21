@@ -14,6 +14,7 @@ const (
 	SingleQuote = '\''
 	DoubleQuote = '"'
 	WhiteSpace  = ' '
+	Backslash   = '\\'
 )
 
 // parseArgs preserves text inside single quotes and separates arguments at unquoted spaces.
@@ -23,6 +24,12 @@ func parseArgs(args string) ([]string, error) {
 	end := 0
 	for end < len(args) {
 		switch args[end] {
+		case Backslash:
+			// We escape the next character and preseve its literal
+			// whilst igonring `\`
+			end++
+			arg.WriteByte(args[end])
+			end++
 		case SingleQuote:
 			closing, found := getClosingIndex(end, SingleQuote, args)
 			if !found {
