@@ -217,7 +217,7 @@ func TestParserBackslashEscape(t *testing.T) {
 			want:  []string{"example\"test"},
 		},
 		"EscapeInsideQuoteAndNoOpOutisedQuote": {
-			input: "test'example'\\'hello",
+			input: `test'example'\'hello`,
 			want:  []string{`testexample'hello`},
 		},
 	}
