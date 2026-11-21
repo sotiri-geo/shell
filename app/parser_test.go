@@ -91,6 +91,14 @@ func TestParserSingleQuoted(t *testing.T) {
 			input: "helloworld''",
 			want:  []string{"helloworld"},
 		},
+		"WithBackslashIgnoresEscapeWithAlphaCharacter": {
+			input: "'shell\\\nscrpit'",
+			want:  []string{"shell\\\nscrpit"},
+		},
+		"WithBackslashIgnoresEscapeWithDoubleQuote": {
+			input: "'example\"test'",
+			want:  []string{"example\"test"},
+		},
 	}
 
 	for name, tc := range testCases {

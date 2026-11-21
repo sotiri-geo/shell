@@ -404,5 +404,24 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 * WithEscapingBackslash - "hello\\world"
 * WithEscapingSpecialCharacters - "\'\"\$\*\&\?"
 
+**Backslash within single quotes**
+
+* WithBackslashIgnoresEscapeWithAlphaCharacter - "'shell\\\nscrpit'"
+
+## Context - Backslash escaping within single quotes
+
+* Backslashing within single quotes '\\\' have no special behaviour. 
+* This means every character, including the backslashes within quotes is treated literally and not interpretted. 
+
+## Contract
+
+* Within single quotes, backslash escape behaviour is ignored.
+
 ## TODO Tests followed by implementation (TDD) 
 
+It may be better to extend the single quotes test function and add further sub-tests as we are verifying the 
+parsing behaviour within the single quotes.
+
+TestParserSingleQuoted
+
+* WithBackslashIgnoresEscapeWithDoubleQuote - `'example\"test'`
