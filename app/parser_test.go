@@ -200,6 +200,10 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: `test\nexample`,
 			want:  []string{"testnexample"},
 		},
+		"WithEscapingBackslash": {
+			input: `hello\\world`,
+			want:  []string{`hello\world`},
+		},
 	}
 
 	for name, tc := range testCases {
