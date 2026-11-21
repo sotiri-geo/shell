@@ -196,6 +196,10 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: `three\   spaces`,
 			want:  []string{"three ", "spaces"},
 		},
+		"WithAlphaCharacterNoOp": {
+			input: `test\nexample`,
+			want:  []string{"testnexample"},
+		},
 	}
 
 	for name, tc := range testCases {
