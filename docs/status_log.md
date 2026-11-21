@@ -412,6 +412,7 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 * Backslashing within single quotes '\\\' have no special behaviour. 
 * This means every character, including the backslashes within quotes is treated literally and not interpretted. 
+* WithBackslashIgnoresEscapeWithDoubleQuote - `'example\"test'`
 
 ## Contract
 
@@ -424,4 +425,3 @@ parsing behaviour within the single quotes.
 
 TestParserSingleQuoted
 
-* WithBackslashIgnoresEscapeWithDoubleQuote - `'example\"test'`
