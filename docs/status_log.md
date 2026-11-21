@@ -399,10 +399,10 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 * WithMultilpeWhitespacePreserved - "three\ \ \ spaces"
 * WithSingleWhitespaceNotEscapedAndRemainingEscaped- "three \ \ \ spaces" -> "three", "   spaces"
+* WithSingleWhitespacePreservedAndRemainingCollapsed - "before\   after"
 
 ## TODO Tests followed by implementation (TDD) - TestBackslashEscape
 
-* WithSingleWhitespacePreservedAndRemainingCollapsed - "before\   after"
 * WithAlphaCharacterNoOp - "test\nexample"
 * WithEscapingBackslash - "hello\\world"
 * WithEscapingSpecialCharacters - "\'\"\$\*\&\?"

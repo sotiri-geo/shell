@@ -192,6 +192,10 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: `three \ \ \ spaces`,
 			want:  []string{"three", "   spaces"},
 		},
+		"WithSingleWhitespacePreservedAndRemainingCollapsed": {
+			input: `three\   spaces`,
+			want:  []string{"three ", "spaces"},
+		},
 	}
 
 	for name, tc := range testCases {
