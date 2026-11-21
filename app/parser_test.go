@@ -204,6 +204,10 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: `hello\\world`,
 			want:  []string{`hello\world`},
 		},
+		"WithEscapingSpecialCharacters": {
+			input: `\'\"\$\*\&\?`,
+			want:  []string{`'"$*&?`},
+		},
 	}
 
 	for name, tc := range testCases {
