@@ -423,5 +423,7 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 It may be better to extend the single quotes test function and add further sub-tests as we are verifying the 
 parsing behaviour within the single quotes.
 
-TestParserSingleQuoted
+TestParserBackslashEscape
+
+* EscapeInsideQuoteAndNoOpOutisedQuote "test'example'\\'hello"
 

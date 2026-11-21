@@ -216,6 +216,10 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: "'example\"test'",
 			want:  []string{"example\"test"},
 		},
+		"EscapeInsideQuoteAndNoOpOutisedQuote": {
+			input: "test'example'\\'hello",
+			want:  []string{`testexample'hello`},
+		},
 	}
 
 	for name, tc := range testCases {
