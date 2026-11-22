@@ -39,13 +39,37 @@ func parseArgs(args string) ([]string, error) {
 			arg.WriteString(args[end+1 : closing])
 			end = closing + 1
 		case DoubleQuote:
-			closing, found := getClosingIndex(end, DoubleQuote, args)
-			if !found {
-				return nil, ErrUnclosedSingleQuote
+			end++
+			isClosed := false
+			i := end
+
+			for i < len(args) {
+				if args[i] == DoubleQuote {
+					isClosed = true
+					// write remaining to buffer
+					arg.WriteString(args[end:i])
+					i++
+					end = i // moves to next - "<next>
+					break
+				}
+				if args[i] == Backslash {
+					if args[i+1] == Backslash || args[i+1] == DoubleQuote {
+						arg.WriteString(args[end:i])
+					}
+					i++
+					// write the escaped char to buffer
+					arg.WriteByte(args[i])
+					// move to the next character after escaped character
+					i++
+					end = i
+					continue
+				}
+				i++
 			}
 
-			arg.WriteString(args[end+1 : closing])
-			end = closing + 1
+			if !isClosed {
+				return nil, ErrUnclosedDoubleQuote
+			}
 		case WhiteSpace:
 			// if there is existing arg - flush to output
 			if arg.Len() > 0 {

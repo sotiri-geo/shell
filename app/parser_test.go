@@ -75,7 +75,7 @@ func TestParserSingleQuoted(t *testing.T) {
 			input: "hello''world",
 			want:  []string{"helloworld"},
 		},
-		"WithAdjacentQuotedStrings": {
+		"ConcatenatesAdjacentQuotedFragments": {
 			input: "'hello''world'",
 			want:  []string{"helloworld"},
 		},
@@ -107,7 +107,7 @@ func TestParserSingleQuoted(t *testing.T) {
 	}
 }
 
-func TestParserUnclosedSingleQuotes(t *testing.T) {
+func TestParserRejectsUnclosedSingleQuote(t *testing.T) {
 	testCases := map[string]string{
 		"LoneOpeningQuote": "'",
 		"AfterEmptyQuotes": "hello'''world",
@@ -130,12 +130,12 @@ func TestParserDoubleQuoted(t *testing.T) {
 		input string
 		want  []string
 	}{
-		"WithMulipleWhiteSpacePreserved": {
+		"PreservesWhitespaceInsideDoubleQuotes": {
 			// GIVEN arg with consecutive whitespace
 			input: "\"hello   world\"",
 			want:  []string{"hello   world"},
 		},
-		"WithAdjacentQuotesConcatenated": {
+		"ConcatenatesTextAroundEmptyDoubleQuotes": {
 			// GIVEN arg with double quotes next to eachother
 			input: "hello\"\"world",
 			want:  []string{"helloworld"},
@@ -172,7 +172,7 @@ func TestParserDoubleQuoted(t *testing.T) {
 			}
 
 			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %v, want %v", got, tc.want)
+				t.Errorf("got %v, want %+v", got, tc.want)
 			}
 		})
 	}
@@ -184,7 +184,7 @@ func TestParserBackslashEscape(t *testing.T) {
 		want  []string
 	}{
 		// GIVEN arg with 3 escaped whitespaces are presere
-		"WithMultilpeWhitespacePreserved": {
+		"KeepsEscapedSpacesInOneArgument": {
 			input: `three\ \ \ spaces`,
 			want:  []string{"three   spaces"},
 		},
@@ -220,6 +220,14 @@ func TestParserBackslashEscape(t *testing.T) {
 			input: `test'example'\'hello`,
 			want:  []string{`testexample'hello`},
 		},
+		"KeepsBackslashWithinDoubleQuotes": {
+			input: `"A \\ escapes itself"`,
+			want:  []string{`A \ escapes itself`},
+		},
+		"KeepsDoubleQuoteWithinDoubleQuotes": {
+			input: `"A \" inside double quotes"`,
+			want:  []string{`A " inside double quotes`},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -236,6 +244,27 @@ func TestParserBackslashEscape(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("OnClosingQuoteErr", func(t *testing.T) {
+		// GIVEN closing quote attempted to be escaped with backslash
+		input := `"hello\"`
+
+		// WHEN invoking parseArgs
+		got, err := parseArgs(input)
+
+		// THEN error indicating an unclosed double quote
+		if err == nil {
+			t.Fatal("should error")
+		}
+
+		if got != nil {
+			t.Fatalf("non-empty returned args: %v", got)
+		}
+
+		if !errors.Is(err, ErrUnclosedDoubleQuote) {
+			t.Errorf("incorrect error returned: %v", err)
+		}
+	})
 }
 
 func TestClosingIndex(t *testing.T) {

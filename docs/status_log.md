@@ -418,12 +418,47 @@ GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
 
 * Within single quotes, backslash escape behaviour is ignored.
 
+## Context - Backslash escaping within Double-Quotes
+
+GNU docs: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes
+
+Specification:
+
+Enclosing characters within double quotes "", preserves the literal values of all character within the quotes with the EXCEPTION of
+some special characters: $, `, \ and when history expansion is enabled '!'.
+
+
+$ and ` - retain their special meaning within double quotes (see shell expansion). The important bit here is to focus on the backslash, which within double quotes, retains its special meaning only when followed by one of the following characters: $, `, ", \ or newline.
+
+Within double quotes, backslashes that follow those characters are removed. However, backslashes that do not follow the above characters are left unmodified (noop).
+
+## Contract
+
+* Within double quotes, backslash behaves as an escape character only when followed by any of the following characters: $, `, ", \ or newline. Otherwise its literal is left unmodified.
+
+## 22-11-26
+
+## Completed 
+* KeepsBackslashWithinDoubleQuotes - "A \\ escapes itself"
+* KeepsDoubleQuoteWithinDoubleQuotes - "A \" inside double quotes"
+* OnClosingQuoteErr - `"hello\"`
+
 ## TODO Tests followed by implementation (TDD) 
 
-It may be better to extend the single quotes test function and add further sub-tests as we are verifying the 
-parsing behaviour within the single quotes.
+## Bug 
 
-TestParserBackslashEscape
+[your-program] $ echo "shell'hello'\\'test"
+[your-program] shell'hello'\\'test
+[tester::#GU3] ^ Line does not match expected value.
+[tester::#GU3] Expected: "shell'hello'\'test"
+[tester::#GU3] Received: "shell'hello'\\'test"
+[your-program] $ 
+[tester::#GU3] Test failed
 
-* EscapeInsideQuoteAndNoOpOutisedQuote "test'example'\\'hello"
+I've identified an issue with how we parses double quotes. We normally search for the closing quote index, but as \ backslash escapes a double quote within two double quotes, it shouldn't be illegal for this to be a user input. So our logic of fetching the closing index breaks the checking mechanism to escape a double quote within double quotes. 
 
+A potential way around this is to iterate line by line and check that we end up with a closing quote if the quote itself is not escaped and treated at a literal.
+
+Notes:
+
+* Consider now refactoring parseArgs into an object with methods to mutate the buffer. The logic is getting complex within the parser, espcially the conditions depending on if the pointer is already inside a double quote or not.

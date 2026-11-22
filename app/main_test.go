@@ -295,7 +295,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("WithUnclosedSingleQuoteRecovers", func(t *testing.T) {
+	t.Run("ContinuesAfterUnclosedSingleQuote", func(t *testing.T) {
 		var output bytes.Buffer
 		want := "$ error: closing single quote not found\n$ still running\n$ "
 
