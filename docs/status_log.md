@@ -462,3 +462,22 @@ A potential way around this is to iterate line by line and check that we end up 
 Notes:
 
 * Consider now refactoring parseArgs into an object with methods to mutate the buffer. The logic is getting complex within the parser, espcially the conditions depending on if the pointer is already inside a double quote or not.
+
+
+Next steps:
+
+I’d put the next failing test around \q inside double quotes, then extract the double-quote scanner into one helper. I’d hold off on a Parser struct until you see what state the helpers actually need to share.
+
+I reproduced a bug that shows why this is a good place to start. echo "pre\qpost" prints qpost. The double-quote branch checks whether the next character can be escaped when deciding whether to write the preceding text, but it advances past the backslash either way. That drops both pre and the backslash. A test named PreservesBackslashBeforeOrdinaryCharacter would pin down the rule. I also confirmed that a trailing backslash can panic, both inside and outside double quotes. Double-quote scanner
+
+I’d work in this order:
+
+1. Pin down those two cases. Check that "pre\qpost" produces one argument containing pre\qpost, and decide how your shell should report a trailing backslash on an incomplete line.
+2. Extract one helper that consumes a double-quoted fragment. Give it a clear cursor contract. It starts on the opening quote, appends the fragment to the current argument, and returns the index of the next unread byte or an error. Keep the decision to finish an argument in parseArgs, so pre"x y"post still forms one argument. As you sketch the helper, ask yourself whether you still need both end and i if you use one cursor and write directly to the builder.
+3. Add the remaining escapes as behaviour changes. Escaped $ and backtick can be tested at the parser boundary. Leave backslash-newline for its own change because Bash removes the pair as a line continuation, and your REPL currently reads one physical line at a time. Bash quoting rules (https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html) · REPL input loop
+
+A private parser struct would earn its place if several helpers end up passing around the same input, cursor, and builder. Even then, I’d name methods after what they consume, such as consumeDoubleQuoted, so the caller can tell where the cursor will be when the method returns.
+
+The current Go suite passes. The cases above show where I’d strengthen it before moving code.
+
+
