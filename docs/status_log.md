@@ -469,10 +469,10 @@ Notes:
 ## Completed
 
 * PreservesBackslashBeforeOrdinaryCharacter - `pre\qpost`
+* Add regression tests in `app/parser_test.go` for trailing-backslash edge cases that currently panic (unquoted `hello\` and double-quoted `"hello\`).
 
 Next steps:
 
-* Add regression tests in `app/parser_test.go` for trailing-backslash edge cases that currently panic (unquoted `hello\` and double-quoted `"hello\`).
 * Refactor `parseArgs` internals into an unexported scanner struct (`argParser`) owning `input`, `pos`, `buf`, and `args`, keeping the `parseArgs(input string) ([]string, error)` signature unchanged.
 * Add small bounds-safe cursor primitives (`eof()`, `peek()`, `advance()`) and extract one helper method per segment (`readSingleQuoted`, `readDoubleQuoted`, `readEscape`, `skipSpaces`).
 * Simplify `readDoubleQuoted` by writing byte-by-byte to `strings.Builder` instead of tracking two indices (`end` and `i`) with slice flushing, and remove `getClosingIndex` (along with its white-box test `TestClosingIndex`) once superseded.

@@ -194,19 +194,19 @@ func TestParserDoubleQuoted(t *testing.T) {
 		})
 	}
 
-	t.Run("RejectsEndingInBackslash", func(t *testing.T) {
-		// GIVEN double quoted input that has last chacarcter backslash
+	t.Run("RejectsUnclosedQuote", func(t *testing.T) {
+		// GIVEN asymetric closing quote
 		input := `"hello\`
 
 		// WHEN invoking the parser with input
 		got, err := parseArgs(input)
 
-		// THEN response is nil and returns ErrEndingInBackslash
+		// THEN response is nil and returns ErrUnclosedDoubleQuote
 		if got != nil {
 			t.Fatalf("parsed response: %v", got)
 		}
 
-		if !errors.Is(err, ErrEndingInBackslash) {
+		if !errors.Is(err, ErrUnclosedDoubleQuote) {
 			t.Errorf("error found: %v", err)
 		}
 	})

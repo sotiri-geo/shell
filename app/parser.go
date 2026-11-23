@@ -61,7 +61,7 @@ func parseArgs(args string) ([]string, error) {
 					arg.WriteString(args[end:i])
 
 					if i == len(args)-1 {
-						return nil, ErrEndingInBackslash
+						return nil, ErrUnclosedDoubleQuote
 					}
 					// Decide if we preserve backslash or escape
 					if args[i+1] == Backslash || args[i+1] == DoubleQuote {
