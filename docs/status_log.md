@@ -481,3 +481,6 @@ A private parser struct would earn its place if several helpers end up passing a
 The current Go suite passes. The cases above show where I’d strengthen it before moving code.
 
 
+* PreservesBackslashBeforeOrdinaryCharacter - `pre\qpost`
+
+

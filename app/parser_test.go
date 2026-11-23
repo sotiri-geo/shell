@@ -172,7 +172,7 @@ func TestParserDoubleQuoted(t *testing.T) {
 			}
 
 			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %v, want %+v", got, tc.want)
+				t.Errorf("got %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -227,6 +227,10 @@ func TestParserBackslashEscape(t *testing.T) {
 		"KeepsDoubleQuoteWithinDoubleQuotes": {
 			input: `"A \" inside double quotes"`,
 			want:  []string{`A " inside double quotes`},
+		},
+		"PreservesBackslashBeforeOrdinaryCharacter": {
+			input: `"pre\qpost"`,
+			want:  []string{`pre\qpost`},
 		},
 	}
 

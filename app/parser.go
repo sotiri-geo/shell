@@ -53,10 +53,12 @@ func parseArgs(args string) ([]string, error) {
 					break
 				}
 				if args[i] == Backslash {
+					// Write up to backslash
+					arg.WriteString(args[end:i])
+					// Decide if we preserve backslash or escape
 					if args[i+1] == Backslash || args[i+1] == DoubleQuote {
-						arg.WriteString(args[end:i])
+						i++
 					}
-					i++
 					// write the escaped char to buffer
 					arg.WriteByte(args[i])
 					// move to the next character after escaped character
