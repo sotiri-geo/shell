@@ -40,6 +40,18 @@ func TestParserUnquoted(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("RejectsEndingInBackslash", func(t *testing.T) {
+		got, err := parseArgs(`hello\`)
+
+		if got != nil {
+			t.Fatalf("parsed response: %v", got)
+		}
+
+		if !errors.Is(err, ErrEndingInBackslash) {
+			t.Errorf("error found: %v", err)
+		}
+	})
 }
 
 func TestParserSingleQuoted(t *testing.T) {

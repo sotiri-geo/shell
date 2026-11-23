@@ -67,3 +67,42 @@ For your parser tests:
 The two unmatched quote cases are a good example. The same input can exercise different responsibilities. A parser test can prove the error is returned. A REPL test earns ContinuesAfterUnclosedSingleQuote by sending a second command and checking its output. If it only checks the diagnostic, ReportsUnclosedSingleQuote is the more accurate name.
 
 When you’re stuck on a name, write this sentence first: “If this test fails, it means the parser no longer ___.” For three\ \ \ spaces, you might fill in “keeps escaped spaces in one argument.” That gives you KeepsEscapedSpacesInOneArgument. If you can only fill in “handles three backslashes,” ask what distinguishes the correct result from the likely bug. That distinction is what belongs in the name.
+
+
+## Cursor based struct
+
+Your Idea: Struct + Helper Methods (The Scanner / Lexer Pattern)
+
+Your proposed refactor is a textbook idiomatic Go pattern: an unexported scanner/parser struct behind a plain function API.
+```go
+    // Public/package API stays identical — all existing tests remain your safety net.
+    func parseArgs(input string) ([]string, error) {
+        p := &argParser{input: input}
+        return p.parse()
+    }
+
+    type argParser struct {
+        input string
+        pos   int
+        buf   strings.Builder
+        args  []string
+    }
+```
+ 
+Why this is idiomatic in Go
+
+ • Zero API churn: Callers don't need to construct a parser struct; it's purely an internal implementation detail to avoid threading (input, pos, &buf) through every helper (like getClosingIndex currently has to).
+ • Single cursor + tiny bounds-safe primitives: Give the struct 2–3 tiny navigation methods:
+ ```go
+    func (p *argParser) eof() bool     { return p.pos >= len(p.input) }
+    func (p *argParser) peek() byte    { return p.input[p.pos] } // or (byte, bool)
+    func (p *argParser) advance() byte { ch := p.input[p.pos]; p.pos++; return ch }
+```
+
+Then each syntactic rule becomes a small, self-contained method:
+• readSingleQuoted() error
+• readDoubleQuoted() error
+• readEscape() error
+• flushArg() / skipSpaces()
+
+

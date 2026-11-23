@@ -8,6 +8,7 @@ import (
 var (
 	ErrUnclosedSingleQuote = errors.New("closing single quote not found")
 	ErrUnclosedDoubleQuote = errors.New("closing double quote not found")
+	ErrEndingInBackslash   = errors.New("character must follow an escaped backslash")
 )
 
 const (
@@ -27,6 +28,9 @@ func parseArgs(args string) ([]string, error) {
 		case Backslash:
 			// We escape the next character and preseve its literal
 			// whilst igonring `\`
+			if end == len(args)-1 {
+				return nil, ErrEndingInBackslash
+			}
 			end++
 			arg.WriteByte(args[end])
 			end++
