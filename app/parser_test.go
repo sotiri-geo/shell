@@ -42,8 +42,13 @@ func TestParserUnquoted(t *testing.T) {
 	}
 
 	t.Run("RejectsEndingInBackslash", func(t *testing.T) {
-		got, err := parseArgs(`hello\`)
+		// GIVEN unquoted input that has last chacarcter backslash
+		input := `hello\`
 
+		// WHEN invoking the parser with input
+		got, err := parseArgs(input)
+
+		// THEN response is nil and returns ErrEndingInBackslash
 		if got != nil {
 			t.Fatalf("parsed response: %v", got)
 		}
@@ -188,6 +193,23 @@ func TestParserDoubleQuoted(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("RejectsEndingInBackslash", func(t *testing.T) {
+		// GIVEN double quoted input that has last chacarcter backslash
+		input := `"hello\`
+
+		// WHEN invoking the parser with input
+		got, err := parseArgs(input)
+
+		// THEN response is nil and returns ErrEndingInBackslash
+		if got != nil {
+			t.Fatalf("parsed response: %v", got)
+		}
+
+		if !errors.Is(err, ErrEndingInBackslash) {
+			t.Errorf("error found: %v", err)
+		}
+	})
 }
 
 func TestParserBackslashEscape(t *testing.T) {
