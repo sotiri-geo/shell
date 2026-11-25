@@ -7,10 +7,13 @@ import (
 
 func TestRunCommand(t *testing.T) {
 	t.Run("WritesCommandStdout", func(t *testing.T) {
+		// GIVEN an executable on PATH that writes a message to stdout
 		dir := t.TempDir()
 		writeFixture(t, dir, "print_message", "#!/bin/sh\necho external\n", 0o755)
 		t.Setenv("PATH", dir)
 
+		// WHEN we run the command
+		// THEN its message is written to the output buffer
 		assertCommandOutput(t, "print_message", "external\n")
 	})
 

@@ -72,14 +72,17 @@ func TestType(t *testing.T) {
 }
 
 func TestTypeReportsExecutablePath(t *testing.T) {
+	// GIVEN a directory on PATH with an executable named mytool
 	dir := t.TempDir()
 	executable := writeFixture(t, dir, "mytool", "#!/bin/sh\nexit 0\n", 0o755)
 	t.Setenv("PATH", dir)
 
 	var output bytes.Buffer
+	// WHEN calling handleType with mytool
 	if err := handleType([]string{"mytool"}, &output); err != nil {
 		t.Fatalf("handleType: %v", err)
 	}
+	// THEN type prints the path to mytool
 	if got, want := output.String(), "mytool is "+executable+"\n"; got != want {
 		t.Errorf("output = %q, want %q", got, want)
 	}
@@ -91,6 +94,7 @@ func TestFindExecutable(t *testing.T) {
 	separator := string(os.PathListSeparator)
 
 	t.Run("FindsExecutableInFirstDirectory", func(t *testing.T) {
+		// GIVEN the first directory on PATH contains mytool
 		dir := t.TempDir()
 		want := writeFixture(t, dir, command, script, 0o755)
 		t.Setenv("PATH", dir)
@@ -99,6 +103,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("SearchesNextDirectoryWhenCommandIsMissing", func(t *testing.T) {
+		// GIVEN mytool is only in the second directory on PATH
 		first, second := t.TempDir(), t.TempDir()
 		want := writeFixture(t, second, command, script, 0o755)
 		t.Setenv("PATH", strings.Join([]string{first, second}, separator))
@@ -107,6 +112,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("SkipsNonExecutableWithSameName", func(t *testing.T) {
+		// GIVEN PATH lists a non-executable mytool before an executable mytool
 		first, second := t.TempDir(), t.TempDir()
 		writeFixture(t, first, command, script, 0o644)
 		want := writeFixture(t, second, command, script, 0o755)
@@ -116,6 +122,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("ReturnsFirstExecutableOnPath", func(t *testing.T) {
+		// GIVEN both directories on PATH contain an executable named mytool
 		first, second := t.TempDir(), t.TempDir()
 		want := writeFixture(t, first, command, script, 0o755)
 		writeFixture(t, second, command, script, 0o755)
@@ -125,6 +132,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("ReportsCommandMissingWhenFileIsNotExecutable", func(t *testing.T) {
+		// GIVEN the only matching file on PATH is non-executable
 		dir := t.TempDir()
 		writeFixture(t, dir, command, script, 0o644)
 		t.Setenv("PATH", dir)
@@ -133,6 +141,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("SearchesPastLeadingEmptyPathEntry", func(t *testing.T) {
+		// GIVEN PATH starts with an empty entry before the directory containing mytool
 		t.Chdir(t.TempDir())
 		dir := t.TempDir()
 		want := writeFixture(t, dir, command, script, 0o755)
@@ -142,6 +151,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("FindsExecutableWithTrailingEmptyPathEntry", func(t *testing.T) {
+		// GIVEN PATH ends with an empty entry after the directory containing mytool
 		t.Chdir(t.TempDir())
 		dir := t.TempDir()
 		want := writeFixture(t, dir, command, script, 0o755)
@@ -151,6 +161,7 @@ func TestFindExecutable(t *testing.T) {
 	})
 
 	t.Run("ReturnsDotSlashForCurrentDirectory", func(t *testing.T) {
+		// GIVEN an executable in the current directory and a relative PATH entry of "."
 		dir := t.TempDir()
 		t.Chdir(dir)
 		writeFixture(t, dir, command, script, 0o755)
@@ -163,7 +174,10 @@ func TestFindExecutable(t *testing.T) {
 func assertExecutablePath(t *testing.T, command, wantPath string) {
 	t.Helper()
 
+	// WHEN calling findExecutable with the command name and PATH
 	got, found := findExecutable(command, "PATH")
+
+	// THEN it reports whether the command was found and returns the expected path
 	wantFound := wantPath != ""
 	if got != wantPath || found != wantFound {
 		t.Errorf("findExecutable(%q, \"PATH\") = (%q, %t), want (%q, %t)", command, got, found, wantPath, wantFound)
@@ -171,19 +185,23 @@ func assertExecutablePath(t *testing.T, command, wantPath string) {
 }
 
 func TestPwdPrintsWorkingDirectory(t *testing.T) {
+	// GIVEN a known working directory
 	dir := resolvedTempDir(t)
 	t.Chdir(dir)
 
 	var output bytes.Buffer
+	// WHEN calling handlePwd
 	if err := handlePwd(&output); err != nil {
 		t.Fatalf("handlePwd: %v", err)
 	}
+	// THEN it writes the current working directory followed by a newline
 	if got, want := output.String(), dir+"\n"; got != want {
 		t.Errorf("output = %q, want %q", got, want)
 	}
 }
 
 func TestCd(t *testing.T) {
+	// GIVEN a starting directory, a missing path, and a separate directory set as HOME
 	startDir := resolvedTempDir(t)
 	targetDir := resolvedTempDir(t)
 	missingDir := filepath.Join(startDir, "missing")
@@ -212,9 +230,11 @@ func TestCd(t *testing.T) {
 			t.Chdir(startDir)
 
 			var output bytes.Buffer
+			// WHEN changing directory using the case's argument
 			if err := handleCd(tc.arg, &output); err != nil {
 				t.Fatalf("handleCd(%q): %v", tc.arg, err)
 			}
+			// THEN cd produces the expected output and leaves the shell in the expected directory
 			if got := output.String(); got != tc.wantOutput {
 				t.Errorf("output = %q, want %q", got, tc.wantOutput)
 			}

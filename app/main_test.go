@@ -54,50 +54,68 @@ func TestRunDispatchesCommands(t *testing.T) {
 	})
 
 	t.Run("DispatchesBuiltinPwd", func(t *testing.T) {
+		// GIVEN a known working directory and an empty directory on PATH
 		dir := resolvedTempDir(t)
 		t.Chdir(dir)
 		t.Setenv("PATH", t.TempDir())
 
+		// WHEN we execute pwd
+		// THEN the builtin prints the working directory
 		assertRunOutput(t, "pwd\n", "$ "+dir+"\n$ ")
 	})
 
 	t.Run("PrefersBuiltinPwdOverExternalCommand", func(t *testing.T) {
+		// GIVEN a known working directory and a competing pwd executable on PATH
 		dir := resolvedTempDir(t)
 		t.Chdir(dir)
 		binDir := t.TempDir()
 		writeFixture(t, binDir, "pwd", "#!/bin/sh\necho EXTERNAL\n", 0o755)
 		t.Setenv("PATH", binDir)
 
+		// WHEN we execute pwd
+		// THEN the builtin prints the working directory
 		assertRunOutput(t, "pwd\n", "$ "+dir+"\n$ ")
 	})
 
 	t.Run("CdPrintsNoOutputOnSuccess", func(t *testing.T) {
+		// GIVEN an existing absolute path and a different working directory
 		targetDir := resolvedTempDir(t)
 		t.Chdir(t.TempDir())
 
+		// WHEN we execute cd with the absolute path
+		// THEN the shell prints only the prompts
 		assertRunOutput(t, "cd '"+targetDir+"'\n", "$ $ ")
 	})
 
 	t.Run("PwdPrintsDirectoryAfterCd", func(t *testing.T) {
+		// GIVEN an existing absolute path and a different working directory
 		targetDir := resolvedTempDir(t)
 		t.Chdir(t.TempDir())
 
+		// WHEN we execute cd followed by pwd
+		// THEN pwd prints the new working directory
 		assertRunOutput(t, "cd '"+targetDir+"'\n pwd\n", "$ $ "+targetDir+"\n$ ")
 	})
 
 	t.Run("CdReportsMissingDirectory", func(t *testing.T) {
+		// GIVEN a known working directory and a path that does not exist
 		startDir := resolvedTempDir(t)
 		t.Chdir(startDir)
 		missingDir := filepath.Join(startDir, "missing")
 
+		// WHEN we execute cd with the missing path
+		// THEN the shell reports that the directory does not exist
 		assertRunOutput(t, "cd '"+missingDir+"'\n", "$ cd: "+missingDir+": No such file or directory\n$ ")
 	})
 
 	t.Run("RunsExternalCommand", func(t *testing.T) {
+		// GIVEN an external executable on PATH that prints a message
 		dir := t.TempDir()
 		writeFixture(t, dir, "print_message", "#!/bin/sh\necho external\n", 0o755)
 		t.Setenv("PATH", dir)
 
+		// WHEN we run the external command
+		// THEN its output appears after the prompt
 		assertRunOutput(t, "print_message hello", "$ external\n")
 	})
 }

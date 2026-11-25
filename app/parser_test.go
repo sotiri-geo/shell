@@ -118,31 +118,37 @@ func TestParseArgsDoubleQuoted(t *testing.T) {
 		want  []string
 	}{
 		{
+			// GIVEN consecutive spaces inside double quotes
 			name:  "PreservesSpaces",
 			input: `"hello   world"`,
 			want:  []string{"hello   world"},
 		},
 		{
+			// GIVEN adjacent double quotes between two unquoted fragments
 			name:  "JoinsFragmentsAroundEmptyQuotes",
 			input: `hello""world`,
 			want:  []string{"helloworld"},
 		},
 		{
+			// GIVEN a double-quoted prefix next to unquoted text
 			name:  "JoinsQuotedPrefixToUnquotedSuffix",
 			input: `"hello"world`,
 			want:  []string{"helloworld"},
 		},
 		{
+			// GIVEN an unquoted prefix next to double-quoted text
 			name:  "JoinsUnquotedPrefixToQuotedSuffix",
 			input: `hello"world"`,
 			want:  []string{"helloworld"},
 		},
 		{
+			// GIVEN double-quoted fragments separated by an unquoted space
 			name:  "SplitsQuotedFragmentsSeparatedBySpaces",
 			input: `"hello" "world"`,
 			want:  []string{"hello", "world"},
 		},
 		{
+			// GIVEN a single quote inside a double-quoted argument
 			name:  "KeepsLiteralSingleQuote",
 			input: `"sotiri's test"`,
 			want:  []string{"sotiri's test"},
@@ -163,6 +169,7 @@ func TestParseArgsBackslashEscapes(t *testing.T) {
 		want  []string
 	}{
 		{
+			// GIVEN an unquoted argument with three escaped spaces
 			name:  "KeepsEscapedSpacesInOneArgument",
 			input: `three\ \ \ spaces`,
 			want:  []string{"three   spaces"},
@@ -234,7 +241,10 @@ func TestParseArgsBackslashEscapes(t *testing.T) {
 func assertParsedArgs(t *testing.T, input string, want []string) {
 	t.Helper()
 
+	// WHEN invoking the parser with the input
 	got, err := parseArgs(input)
+
+	// THEN it returns the expected arguments without an error
 	if err != nil {
 		t.Fatalf("parseArgs(%q): %v", input, err)
 	}
@@ -250,26 +260,31 @@ func TestParseArgsErrors(t *testing.T) {
 		want  error
 	}{
 		{
+			// GIVEN unquoted input ending in a backslash
 			name:  "RejectsTrailingUnquotedBackslash",
 			input: `hello\`,
 			want:  ErrEndingInBackslash,
 		},
 		{
+			// GIVEN a single quote with no matching closing quote
 			name:  "RejectsLoneOpeningSingleQuote",
 			input: "'",
 			want:  ErrUnclosedSingleQuote,
 		},
 		{
+			// GIVEN an unclosed single quote after a pair of empty quotes
 			name:  "RejectsUnclosedSingleQuoteAfterEmptyQuotes",
 			input: "hello'''world",
 			want:  ErrUnclosedSingleQuote,
 		},
 		{
+			// GIVEN an open double quote and a backslash at the end of input
 			name:  "RejectsTrailingBackslashInsideDoubleQuotes",
 			input: `"hello\`,
 			want:  ErrUnclosedDoubleQuote,
 		},
 		{
+			// GIVEN a backslash that escapes the final double quote
 			name:  "RejectsEscapedFinalDoubleQuote",
 			input: `"hello\"`,
 			want:  ErrUnclosedDoubleQuote,
@@ -278,7 +293,10 @@ func TestParseArgsErrors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// WHEN invoking the parser with the input
 			got, err := parseArgs(tc.input)
+
+			// THEN it returns the expected error and nil arguments
 			if !errors.Is(err, tc.want) {
 				t.Errorf("parseArgs(%q) error = %v, want %v", tc.input, err, tc.want)
 			}
