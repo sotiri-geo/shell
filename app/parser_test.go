@@ -6,374 +6,362 @@ import (
 	"testing"
 )
 
-func TestParserUnquoted(t *testing.T) {
-	testCases := map[string]struct {
+func TestParseArgsUnquoted(t *testing.T) {
+	testCases := []struct {
+		name  string
 		input string
 		want  []string
 	}{
-		"MultipleWords": {
+		{
+			name:  "SplitsAtSpaces",
 			input: "hello world",
 			want:  []string{"hello", "world"},
 		},
-		"SingleWord": {
+		{
+			name:  "KeepsSingleWord",
 			input: "hello",
 			want:  []string{"hello"},
 		},
-		"WithWhitespaceCollapsed": {
+		{
+			name:  "CollapsesConsecutiveSpaces",
 			input: "hello    world",
 			want:  []string{"hello", "world"},
 		},
-		"OnlySeparators": {
+		{
+			name:  "ReturnsNoArgumentsForSpacesOnly",
 			input: "   ",
 			want:  []string{},
 		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			got, err := parseArgs(tc.input)
-			if err != nil {
-				t.Fatalf("should not error: %v", err)
-			}
-			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %+v, want %+v", got, tc.want)
-			}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertParsedArgs(t, tc.input, tc.want)
 		})
 	}
-
-	t.Run("RejectsEndingInBackslash", func(t *testing.T) {
-		// GIVEN unquoted input that has last chacarcter backslash
-		input := `hello\`
-
-		// WHEN invoking the parser with input
-		got, err := parseArgs(input)
-
-		// THEN response is nil and returns ErrEndingInBackslash
-		if got != nil {
-			t.Fatalf("parsed response: %v", got)
-		}
-
-		if !errors.Is(err, ErrEndingInBackslash) {
-			t.Errorf("error found: %v", err)
-		}
-	})
 }
 
-func TestParserSingleQuoted(t *testing.T) {
-	testCases := map[string]struct {
+func TestParseArgsSingleQuoted(t *testing.T) {
+	testCases := []struct {
+		name  string
 		input string
 		want  []string
 	}{
-		"RemovesQuotes": {
+		{
+			name:  "RemovesQuotes",
 			input: "'hello world'",
 			want:  []string{"hello world"},
 		},
-		"PreservesWhitespace": {
+		{
+			name:  "PreservesWhitespace",
 			input: "'hello    world'",
 			want:  []string{"hello    world"},
 		},
-		"PreservesWhitespaceAtQuotedEdges": {
+		{
+			name:  "PreservesWhitespaceAtQuotedEdges",
 			input: "' \tx\t '",
 			want:  []string{" \tx\t "},
 		},
-		"SingleEmptyQuotes": {
+		{
+			name:  "ReturnsNoArgumentsForEmptyQuotes",
 			input: "''",
 			want:  []string{},
 		},
-		"IgnoresStandaloneEmptyQuotesBetweenArgs": {
+		{
+			name:  "IgnoresStandaloneEmptyQuotesBetweenArgs",
 			input: "left '' right",
 			want:  []string{"left", "right"},
 		},
-		"PreservesSpecialCharacters": {
+		{
+			name:  "PreservesSpecialCharacters",
 			input: "'$%!~\\'",
 			want:  []string{"$%!~\\"},
 		},
-		"WithEmptyQuotesIgnored": {
+		{
+			name:  "JoinsFragmentsAroundEmptyQuotes",
 			input: "hello''world",
 			want:  []string{"helloworld"},
 		},
-		"ConcatenatesAdjacentQuotedFragments": {
+		{
+			name:  "ConcatenatesAdjacentQuotedFragments",
 			input: "'hello''world'",
 			want:  []string{"helloworld"},
 		},
-		"WithGapAndAdjacentQuotedStrings": {
+		{
+			name:  "SplitsQuotedFragmentsSeparatedBySpaces",
 			input: "'hello'   'world'",
 			want:  []string{"hello", "world"},
 		},
-		"CombinesQuotedAndUnquotedFragments": {
+		{
+			name:  "CombinesQuotedAndUnquotedFragments",
 			input: "pre'x y'post next",
 			want:  []string{"prex ypost", "next"},
 		},
-		"WithEmptyQuotesIgnoredAtEnd": {
+		{
+			name:  "IgnoresTrailingEmptyQuotes",
 			input: "helloworld''",
 			want:  []string{"helloworld"},
 		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			got, err := parseArgs(tc.input)
-			if err != nil {
-				t.Fatalf("should not error: %v", err)
-			}
-
-			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %q, want %q", got, tc.want)
-			}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertParsedArgs(t, tc.input, tc.want)
 		})
 	}
 }
 
-func TestParserRejectsUnclosedSingleQuote(t *testing.T) {
-	testCases := map[string]string{
-		"LoneOpeningQuote": "'",
-		"AfterEmptyQuotes": "hello'''world",
-	}
-	for name, input := range testCases {
-		t.Run(name, func(t *testing.T) {
-			got, err := parseArgs(input)
-			if !errors.Is(err, ErrUnclosedSingleQuote) {
-				t.Errorf("got error: %v, want: %v", err, ErrUnclosedSingleQuote)
-			}
-			if got != nil {
-				t.Errorf("got %v, want %v", got, nil)
-			}
-		})
-	}
-}
-
-func TestParserDoubleQuoted(t *testing.T) {
-	testCases := map[string]struct {
+func TestParseArgsDoubleQuoted(t *testing.T) {
+	testCases := []struct {
+		name  string
 		input string
 		want  []string
 	}{
-		"PreservesWhitespaceInsideDoubleQuotes": {
-			// GIVEN arg with consecutive whitespace
-			input: "\"hello   world\"",
+		{
+			name:  "PreservesSpaces",
+			input: `"hello   world"`,
 			want:  []string{"hello   world"},
 		},
-		"ConcatenatesTextAroundEmptyDoubleQuotes": {
-			// GIVEN arg with double quotes next to eachother
-			input: "hello\"\"world",
+		{
+			name:  "JoinsFragmentsAroundEmptyQuotes",
+			input: `hello""world`,
 			want:  []string{"helloworld"},
 		},
-		"WithQuotedAndUnquotedAdjacent": {
-			// GIVEN arg with double quoted text next to unquoted text
-			input: "\"hello\"world",
+		{
+			name:  "JoinsQuotedPrefixToUnquotedSuffix",
+			input: `"hello"world`,
 			want:  []string{"helloworld"},
 		},
-		"WithUnquotedAndQuotedAdjacent": {
-			// GIVEN arg with unquoted text next to doulbe quoted text
-			input: "hello\"world\"",
+		{
+			name:  "JoinsUnquotedPrefixToQuotedSuffix",
+			input: `hello"world"`,
 			want:  []string{"helloworld"},
 		},
-		"WithQuotedSeparatedByWhitespace": {
-			// GIVEN arg with double quoted text separated by whitespace
-			input: "\"hello\" \"world\"",
+		{
+			name:  "SplitsQuotedFragmentsSeparatedBySpaces",
+			input: `"hello" "world"`,
 			want:  []string{"hello", "world"},
 		},
-		"ContainingSingleQuotes": {
-			// GIVEN arg with single quote contained inside double quote
-			input: "\"sotiri's test\"",
+		{
+			name:  "KeepsLiteralSingleQuote",
+			input: `"sotiri's test"`,
 			want:  []string{"sotiri's test"},
 		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			// WHEN invoking parseArgs with a1
-			got, err := parseArgs(tc.input)
-			// THEN no error with correct output
-			if err != nil {
-				t.Fatalf("should not error: %v", err)
-			}
-
-			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %v, want %v", got, tc.want)
-			}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertParsedArgs(t, tc.input, tc.want)
 		})
 	}
-
-	t.Run("RejectsUnclosedQuote", func(t *testing.T) {
-		// GIVEN asymetric closing quote
-		input := `"hello\`
-
-		// WHEN invoking the parser with input
-		got, err := parseArgs(input)
-
-		// THEN response is nil and returns ErrUnclosedDoubleQuote
-		if got != nil {
-			t.Fatalf("parsed response: %v", got)
-		}
-
-		if !errors.Is(err, ErrUnclosedDoubleQuote) {
-			t.Errorf("error found: %v", err)
-		}
-	})
 }
 
-func TestParserBackslashEscape(t *testing.T) {
-	testCases := map[string]struct {
+func TestParseArgsBackslashEscapes(t *testing.T) {
+	testCases := []struct {
+		name  string
 		input string
 		want  []string
 	}{
-		// GIVEN arg with 3 escaped whitespaces are presere
-		"KeepsEscapedSpacesInOneArgument": {
+		{
+			name:  "KeepsEscapedSpacesInOneArgument",
 			input: `three\ \ \ spaces`,
 			want:  []string{"three   spaces"},
 		},
-		"WithSingleWhitespaceNotEscapedAndRemainingEscaped": {
+		{
+			name:  "SplitsAtUnescapedSpaceBeforeEscapedSpaces",
 			input: `three \ \ \ spaces`,
 			want:  []string{"three", "   spaces"},
 		},
-		"WithSingleWhitespacePreservedAndRemainingCollapsed": {
+		{
+			name:  "SplitsAtUnescapedSpacesAfterEscapedSpace",
 			input: `three\   spaces`,
 			want:  []string{"three ", "spaces"},
 		},
-		"WithAlphaCharacterNoOp": {
+		{
+			name:  "RemovesBackslashBeforeUnquotedLetter",
 			input: `test\nexample`,
 			want:  []string{"testnexample"},
 		},
-		"WithEscapingBackslash": {
+		{
+			name:  "UnquotedBackslashEscapesBackslash",
 			input: `hello\\world`,
 			want:  []string{`hello\world`},
 		},
-		"WithEscapingSpecialCharacters": {
+		{
+			name:  "KeepsEscapedSpecialCharactersLiteral",
 			input: `\'\"\$\*\&\?`,
 			want:  []string{`'"$*&?`},
 		},
-		"WithBackslashIgnoresEscapeWithAlphaCharacter": {
-			input: "'shell\\\nscrpit'",
-			want:  []string{"shell\\\nscrpit"},
+		{
+			name:  "KeepsBackslashBeforeNewlineInsideSingleQuotes",
+			input: "'shell\\\nscript'",
+			want:  []string{"shell\\\nscript"},
 		},
-		"WithBackslashIgnoresEscapeWithDoubleQuote": {
-			input: "'example\"test'",
-			want:  []string{"example\"test"},
+		{
+			name:  "KeepsBackslashBeforeDoubleQuoteInsideSingleQuotes",
+			input: `'example\"test'`,
+			want:  []string{`example\"test`},
 		},
-		"EscapeInsideQuoteAndNoOpOutisedQuote": {
+		{
+			name:  "JoinsSingleQuotedTextAndEscapedSingleQuote",
 			input: `test'example'\'hello`,
 			want:  []string{`testexample'hello`},
 		},
-		"KeepsBackslashWithinDoubleQuotes": {
+		{
+			name:  "DoubleQuotedBackslashEscapesBackslash",
 			input: `"A \\ escapes itself"`,
 			want:  []string{`A \ escapes itself`},
 		},
-		"KeepsDoubleQuoteWithinDoubleQuotes": {
+		{
+			name:  "DoubleQuotedBackslashEscapesDoubleQuote",
 			input: `"A \" inside double quotes"`,
 			want:  []string{`A " inside double quotes`},
 		},
-		"PreservesBackslashBeforeOrdinaryCharacter": {
+		{
+			name:  "KeepsBackslashBeforeOrdinaryCharacterInsideDoubleQuotes",
 			input: `"pre\qpost"`,
 			want:  []string{`pre\qpost`},
 		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			// WHEN invoking parseArgs with a1
-			got, err := parseArgs(tc.input)
-			// THEN no error with correct output
-			if err != nil {
-				t.Fatalf("should not error: %v", err)
-			}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertParsedArgs(t, tc.input, tc.want)
+		})
+	}
+}
 
-			if !slices.Equal(got, tc.want) {
-				t.Errorf("got %v, want %v", got, tc.want)
+func assertParsedArgs(t *testing.T, input string, want []string) {
+	t.Helper()
+
+	got, err := parseArgs(input)
+	if err != nil {
+		t.Fatalf("parseArgs(%q): %v", input, err)
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("parseArgs(%q) = %q, want %q", input, got, want)
+	}
+}
+
+func TestParseArgsErrors(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  error
+	}{
+		{
+			name:  "RejectsTrailingUnquotedBackslash",
+			input: `hello\`,
+			want:  ErrEndingInBackslash,
+		},
+		{
+			name:  "RejectsLoneOpeningSingleQuote",
+			input: "'",
+			want:  ErrUnclosedSingleQuote,
+		},
+		{
+			name:  "RejectsUnclosedSingleQuoteAfterEmptyQuotes",
+			input: "hello'''world",
+			want:  ErrUnclosedSingleQuote,
+		},
+		{
+			name:  "RejectsTrailingBackslashInsideDoubleQuotes",
+			input: `"hello\`,
+			want:  ErrUnclosedDoubleQuote,
+		},
+		{
+			name:  "RejectsEscapedFinalDoubleQuote",
+			input: `"hello\"`,
+			want:  ErrUnclosedDoubleQuote,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseArgs(tc.input)
+			if !errors.Is(err, tc.want) {
+				t.Errorf("parseArgs(%q) error = %v, want %v", tc.input, err, tc.want)
+			}
+			if got != nil {
+				t.Errorf("parseArgs(%q) args = %q, want nil", tc.input, got)
 			}
 		})
 	}
-
-	t.Run("OnClosingQuoteErr", func(t *testing.T) {
-		// GIVEN closing quote attempted to be escaped with backslash
-		input := `"hello\"`
-
-		// WHEN invoking parseArgs
-		got, err := parseArgs(input)
-
-		// THEN error indicating an unclosed double quote
-		if err == nil {
-			t.Fatal("should error")
-		}
-
-		if got != nil {
-			t.Fatalf("non-empty returned args: %v", got)
-		}
-
-		if !errors.Is(err, ErrUnclosedDoubleQuote) {
-			t.Errorf("incorrect error returned: %v", err)
-		}
-	})
 }
 
-func TestClosingIndex(t *testing.T) {
-	testCases := map[string]struct {
-		start  int
-		sep    byte
-		args   string
-		want   int
-		exists bool
+func TestGetClosingIndex(t *testing.T) {
+	testCases := []struct {
+		name      string
+		start     int
+		sep       byte
+		input     string
+		want      int
+		wantFound bool
 	}{
-		"WithSingleQuote": {
-			start:  0,
-			sep:    '\'',
-			args:   "'hello'",
-			want:   6,
-			exists: true,
+		{
+			name:      "FindsClosingSingleQuote",
+			start:     0,
+			sep:       '\'',
+			input:     "'hello'",
+			want:      6,
+			wantFound: true,
 		},
-		"ReturnsFirstWord": {
-			start:  0,
-			sep:    '\'',
-			args:   "'hello' 'world'",
-			want:   6,
-			exists: true,
+		{
+			name:      "StopsAtFirstClosingQuote",
+			start:     0,
+			sep:       '\'',
+			input:     "'hello' 'world'",
+			want:      6,
+			wantFound: true,
 		},
-		"WithNonQuotes": {
-			start:  0,
-			sep:    ' ',
-			args:   "hello world",
-			want:   5,
-			exists: true,
+		{
+			name:      "FindsSpaceSeparator",
+			start:     0,
+			sep:       ' ',
+			input:     "hello world",
+			want:      5,
+			wantFound: true,
 		},
-		"WithStartAtNonZeroIndex": {
-			start:  5,
-			sep:    ' ',
-			args:   "this is amazing",
-			want:   7,
-			exists: true,
+		{
+			name:      "SearchesAfterStartIndex",
+			start:     5,
+			sep:       ' ',
+			input:     "this is amazing",
+			want:      7,
+			wantFound: true,
 		},
-		"WithNonExistentSeparatorReturnsEndOfLine": {
-			start:  0,
-			sep:    '\'',
-			args:   "'hello world",
-			want:   12,
-			exists: false,
+		{
+			name:      "ReturnsEndOfInputWhenSeparatorIsMissing",
+			start:     0,
+			sep:       '\'',
+			input:     "'hello world",
+			want:      12,
+			wantFound: false,
 		},
-		"WithSingleQuoteWhitespaceAndMultipleWords": {
-			start:  0,
-			sep:    '\'',
-			args:   "'hello' world",
-			want:   6,
-			exists: true,
+		{
+			name:      "StopsAtClosingQuoteBeforeSpace",
+			start:     0,
+			sep:       '\'',
+			input:     "'hello' world",
+			want:      6,
+			wantFound: true,
 		},
-		"WithSingleQuoteAndMultipleWords": {
-			start:  0,
-			sep:    '\'',
-			args:   "'hello'world",
-			want:   6,
-			exists: true,
+		{
+			name:      "StopsAtClosingQuoteBeforeUnquotedText",
+			start:     0,
+			sep:       '\'',
+			input:     "'hello'world",
+			want:      6,
+			wantFound: true,
 		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			got, found := getClosingIndex(tc.start, tc.sep, tc.args)
-
-			if found != tc.exists {
-				t.Fatalf("should exist %v: found %v", tc.exists, found)
-			}
-
-			if got != tc.want {
-				t.Errorf("got %d, want %d", got, tc.want)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, found := getClosingIndex(tc.start, tc.sep, tc.input)
+			if got != tc.want || found != tc.wantFound {
+				t.Errorf("getClosingIndex(%d, %q, %q) = (%d, %t), want (%d, %t)",
+					tc.start, tc.sep, tc.input, got, found, tc.want, tc.wantFound)
 			}
 		})
 	}
