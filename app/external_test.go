@@ -2,148 +2,79 @@ package main
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
-func TestExternalCommand(t *testing.T) {
-	t.Run("Exists", func(t *testing.T) {
-		var output bytes.Buffer
-		want := "false\n"
-		command := "always_false"
-		// GIVEN always_false executable in path p1
+func TestRunCommand(t *testing.T) {
+	t.Run("WritesCommandStdout", func(t *testing.T) {
+		// GIVEN an executable on PATH that writes a message to stdout
 		dir := t.TempDir()
-		p1 := filepath.Join(dir, command)
-		if err := os.WriteFile(
-			p1,
-			[]byte("#!/bin/sh\necho false\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-
+		writeFixture(t, dir, "print_message", "#!/bin/sh\necho external\n", 0o755)
 		t.Setenv("PATH", dir)
 
-		found, err := runCommand(command, &output)
-
-		if !found {
-			t.Fatal("should exist")
-		}
-
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		// WHEN we run the command
+		// THEN its message is written to the output buffer
+		assertCommandOutput(t, "print_message", "external\n")
 	})
 
-	t.Run("NotExists", func(t *testing.T) {
-		var output bytes.Buffer
+	t.Run("ReportsMissingCommand", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
 
+		var output bytes.Buffer
 		found, err := runCommand("invalid_command", &output)
 		if err != nil {
-			t.Fatalf("should not error: %v", err)
+			t.Fatalf("runCommand: %v", err)
 		}
-
 		if found {
-			t.Errorf("found unknown command: %q", "invalid_command")
+			t.Error("found missing command")
 		}
 	})
 
-	t.Run("ExistsNotOnPath", func(t *testing.T) {
-		var output bytes.Buffer
-		command := "invalid_command"
-		dir1 := t.TempDir()
-		dir2 := t.TempDir()
-		p1 := filepath.Join(dir1, command)
-		if err := os.WriteFile(
-			p1,
-			[]byte("#!/bin/sh\necho invalid_command\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-
-		t.Setenv("PATH", dir2)
-
-		found, err := runCommand(command, &output)
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-		if found {
-			t.Errorf("should not exist: %v", command)
-		}
-	})
-	t.Run("RunsWithMulpitleArgs", func(t *testing.T) {
-		var output bytes.Buffer
-		command := "mytool"
-		arg1, arg2 := "hello", "world"
-		want := "hello\nworld\n"
+	t.Run("IgnoresExecutableOutsidePath", func(t *testing.T) {
 		dir := t.TempDir()
-		p1 := filepath.Join(dir, command)
-		if err := os.WriteFile(
-			p1,
-			[]byte("#!/bin/sh\nfor arg in ${@};do\n printf '%s\n' ${arg}\n done\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
+		writeFixture(t, dir, "mytool", "#!/bin/sh\nexit 0\n", 0o755)
+		t.Setenv("PATH", t.TempDir())
 
+		var output bytes.Buffer
+		found, err := runCommand("mytool", &output)
+		if err != nil {
+			t.Fatalf("runCommand: %v", err)
+		}
+		if found {
+			t.Error("found executable outside PATH")
+		}
+	})
+
+	t.Run("PassesArgumentsInOrder", func(t *testing.T) {
+		dir := t.TempDir()
+		writeFixture(t, dir, "print_args", "#!/bin/sh\nprintf '%s\\n' \"$@\"\n", 0o755)
 		t.Setenv("PATH", dir)
 
-		found, err := runCommand(command, &output, arg1, arg2)
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if !found {
-			t.Fatal("should exist")
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		assertCommandOutput(t, "print_args", "hello\nworld\n", "hello", "world")
 	})
-	t.Run("WithCat", func(t *testing.T) {
-		var output bytes.Buffer
-		d1 := t.TempDir()
-		t.Chdir(d1)
-		f1, f2 := "file1", "file2"
-		want := "mango chutney.blueberry pineapple."
 
-		p1 := filepath.Join(d1, f1)
-		p2 := filepath.Join(d1, f2)
+	t.Run("CatConcatenatesFilesInArgumentOrder", func(t *testing.T) {
+		dir := t.TempDir()
+		t.Chdir(dir)
+		writeFixture(t, dir, "file1", "mango chutney.", 0o644)
+		writeFixture(t, dir, "file2", "blueberry pineapple.", 0o644)
 
-		if err := os.WriteFile(
-			p1,
-			[]byte("mango chutney."),
-			PermReadWrite,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-		if err := os.WriteFile(
-			p2,
-			[]byte("blueberry pineapple."),
-			PermReadWrite,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-
-		// Use default PATH - no override
-		found, err := runCommand("cat", &output, []string{f1, f2}...)
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if !found {
-			t.Fatal("should exist")
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		assertCommandOutput(t, "cat", "mango chutney.blueberry pineapple.", "file1", "file2")
 	})
+}
+
+func assertCommandOutput(t *testing.T, name, want string, args ...string) {
+	t.Helper()
+
+	var output bytes.Buffer
+	found, err := runCommand(name, &output, args...)
+	if err != nil {
+		t.Fatalf("runCommand(%q, %q): %v", name, args, err)
+	}
+	if !found {
+		t.Fatalf("command %q not found", name)
+	}
+	if got := output.String(); got != want {
+		t.Errorf("command %q output = %q, want %q", name, got, want)
+	}
 }

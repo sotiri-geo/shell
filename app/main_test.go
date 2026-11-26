@@ -2,310 +2,177 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestCommandRecievesParsedArgs(t *testing.T) {
-	testCases := map[string]struct {
-		input string
-		want  string
-	}{
-		"WithArgsCollapsed": {
-			input: "echo hello''world\n",
-			want:  "$ helloworld\n$ ",
-		},
-		"WithSingleQuotesPresevingCharacters": {
-			input: "echo 'hello   world'\n",
-			want:  "$ hello   world\n$ ",
-		},
-	}
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			var output bytes.Buffer
-			err := run(strings.NewReader(tc.input), &output)
-			if err != nil {
-				t.Fatalf("should not fail: %v", err)
-			}
+func TestRunPassesParsedArgumentsToEcho(t *testing.T) {
+	t.Run("JoinsFragmentsAroundEmptyQuotes", func(t *testing.T) {
+		assertRunOutput(t, "echo hello''world\n", "$ helloworld\n$ ")
+	})
 
-			if got := output.String(); got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
-			}
-		})
-	}
-
-	t.Run("ExternalPreservesArgumentBoundaries", func(t *testing.T) {
-		dir := t.TempDir()
-		executable := filepath.Join(dir, "print_args")
-		script := "#!/bin/sh\nprintf '<%s>\\n' \"$@\"\n"
-		if err := os.WriteFile(executable, []byte(script), PermExecutable); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-		t.Setenv("PATH", dir)
-
-		var output bytes.Buffer
-		shouldExit, err := execute("print_args 'x y' z", &output)
-		if err != nil {
-			t.Fatalf("execute: %v", err)
-		}
-		if shouldExit {
-			t.Fatal("external command should not exit the shell")
-		}
-		if got, want := output.String(), "<x y>\n<z>\n"; got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+	t.Run("PreservesSpacesInsideSingleQuotes", func(t *testing.T) {
+		assertRunOutput(t, "echo 'hello   world'\n", "$ hello   world\n$ ")
 	})
 }
 
-func TestRoutingCommand(t *testing.T) {
-	testCases := map[string]struct {
-		input string
-		want  string
-	}{
-		"WithExit": {
-			input: "exit\n",
-			want:  "$ ",
-		},
-		"WithEcho": {
-			input: "echo Hello World\n",
-			want:  "$ Hello World\n$ ",
-		},
-		"WithType": {
-			input: "type echo\n",
-			want:  "$ echo is a shell builtin\n$ ",
-		},
-		"WithUnknownCommand": {
-			input: "invalid_command\n",
-			want:  "$ invalid_command: command not found\n$ ",
-		},
-		"WithEmptyCommand": {
-			input: "",
-			want:  "$ ",
-		},
-		"WithNewLineCommand": {
-			input: "\n",
-			want:  "$ $ ",
-		},
-		"WithoutNewLine": {
-			input: "echo Hello World",
-			want:  "$ Hello World\n",
-		},
+func TestExecutePreservesExternalArgumentBoundaries(t *testing.T) {
+	dir := t.TempDir()
+	writeFixture(t, dir, "print_args", "#!/bin/sh\nprintf '<%s>\\n' \"$@\"\n", 0o755)
+	t.Setenv("PATH", dir)
+
+	var output bytes.Buffer
+	shouldExit, err := execute("print_args 'x y' z", &output)
+	if err != nil {
+		t.Fatalf("execute: %v", err)
 	}
-
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			var output bytes.Buffer
-			err := run(strings.NewReader(tc.input), &output)
-			if err != nil {
-				t.Fatalf("should not fail: %v", err)
-			}
-
-			if got := output.String(); got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
-			}
-		})
+	if shouldExit {
+		t.Error("external command exited the shell")
 	}
+	if got, want := output.String(), "<x y>\n<z>\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
+	}
+}
 
-	// PWD requires a different setup but is logically related to the routing
-	// that occurs in execute()
-	t.Run("WithPwd", func(t *testing.T) {
-		// GIVEN a directory d1
-		d1 := t.TempDir()
-		want := fmt.Sprintf("$ %s\n$ ", d1)
-		// GIVEN a change in working directory d1
-		t.Chdir(d1)
-		// GIVEN PATH is empty to avoid fallback to system pwd command
-		t.Setenv("PATH", "")
-		var output bytes.Buffer
-
-		// WHEN we execute `pwd` command
-		err := run(strings.NewReader("pwd\n"), &output)
-		// THEN no errors and directory d1 is written
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+func TestRunDispatchesCommands(t *testing.T) {
+	t.Run("DispatchesEcho", func(t *testing.T) {
+		assertRunOutput(t, "echo Hello World\n", "$ Hello World\n$ ")
 	})
 
-	// We prove that when there exists a competing external executable
-	// that builtin executable takes priority
-	t.Run("WithCompetingExternalPwdCommand", func(t *testing.T) {
-		// GIVEN a directory d1
-		d1 := t.TempDir()
-		want := fmt.Sprintf("$ %s\n$ ", d1)
-		d2 := t.TempDir()
-		// GIVEN competing executable pwd in d2
-		executable := filepath.Join(d2, "pwd")
-		if err := os.WriteFile(
-			executable,
-			[]byte("#!/bin/sh\necho EXTERNAL\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-
-		// GIVEN external pwd is discoverable through PATH
-		t.Setenv("PATH", d2)
-		// GIVEN a change in working directory d1
-		t.Chdir(d1)
-		var output bytes.Buffer
-
-		// WHEN we execute `pwd` command
-		err := run(strings.NewReader("pwd\n"), &output)
-		// THEN no errors and directory d1 is written
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+	t.Run("DispatchesType", func(t *testing.T) {
+		assertRunOutput(t, "type echo\n", "$ echo is a shell builtin\n$ ")
 	})
 
-	t.Run("WithCd", func(t *testing.T) {
-		// GIVEN a directory with its absolute path d1
-		d1 := t.TempDir()
-		absD1, err := filepath.EvalSymlinks(d1)
-		if err != nil {
-			t.Fatalf("resolving symlink: %v", err)
-		}
-
-		var output bytes.Buffer
-
-		// WHEN we execute the cd command with the d1
-		err = run(strings.NewReader(fmt.Sprintf("cd %s\n", absD1)), &output)
-		// THEN no errors, output is empty
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if got := output.String(); got != "$ $ " {
-			t.Errorf("should return newline when changing directory: got %q", got)
-		}
+	t.Run("TypeReportsEachArgument", func(t *testing.T) {
+		assertRunOutput(t, "type echo type", "$ echo is a shell builtin\ntype is a shell builtin\n")
 	})
-	t.Run("WithCdThenPwd", func(t *testing.T) {
-		// GIVEN a directory with its absolute path d1
-		d1 := t.TempDir()
-		absD1, err := filepath.EvalSymlinks(d1)
 
-		// Change dir for starting point
+	t.Run("ReportsUnknownCommand", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+		assertRunOutput(t, "invalid_command\n", "$ invalid_command: command not found\n$ ")
+	})
+
+	t.Run("DispatchesBuiltinPwd", func(t *testing.T) {
+		// GIVEN a known working directory and an empty directory on PATH
+		dir := resolvedTempDir(t)
+		t.Chdir(dir)
+		t.Setenv("PATH", t.TempDir())
+
+		// WHEN we execute pwd
+		// THEN the builtin prints the working directory
+		assertRunOutput(t, "pwd\n", "$ "+dir+"\n$ ")
+	})
+
+	t.Run("PrefersBuiltinPwdOverExternalCommand", func(t *testing.T) {
+		// GIVEN a known working directory and a competing pwd executable on PATH
+		dir := resolvedTempDir(t)
+		t.Chdir(dir)
+		binDir := t.TempDir()
+		writeFixture(t, binDir, "pwd", "#!/bin/sh\necho EXTERNAL\n", 0o755)
+		t.Setenv("PATH", binDir)
+
+		// WHEN we execute pwd
+		// THEN the builtin prints the working directory
+		assertRunOutput(t, "pwd\n", "$ "+dir+"\n$ ")
+	})
+
+	t.Run("CdPrintsNoOutputOnSuccess", func(t *testing.T) {
+		// GIVEN an existing absolute path and a different working directory
+		targetDir := resolvedTempDir(t)
 		t.Chdir(t.TempDir())
-		if err != nil {
-			t.Fatalf("resolving symlink: %v", err)
-		}
 
-		var output bytes.Buffer
-
-		// WHEN we execute the cd command with the d1
-		err = run(strings.NewReader(fmt.Sprintf("cd %s\n pwd\n", absD1)), &output)
-		// THEN no errors, output is empty
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		want := fmt.Sprintf("$ $ %s\n$ ", absD1)
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		// WHEN we execute cd with the absolute path
+		// THEN the shell prints only the prompts
+		assertRunOutput(t, "cd '"+targetDir+"'\n", "$ $ ")
 	})
 
-	t.Run("WithCdAndNonExistentPath", func(t *testing.T) {
-		// GIVEN a directory with its absolute path d1
-		d1 := t.TempDir()
-		d2 := "/does/not/exist"
+	t.Run("PwdPrintsDirectoryAfterCd", func(t *testing.T) {
+		// GIVEN an existing absolute path and a different working directory
+		targetDir := resolvedTempDir(t)
+		t.Chdir(t.TempDir())
 
-		// Change dir for starting point
-		t.Chdir(d1)
-		var output bytes.Buffer
+		// WHEN we execute cd followed by pwd
+		// THEN pwd prints the new working directory
+		assertRunOutput(t, "cd '"+targetDir+"'\n pwd\n", "$ $ "+targetDir+"\n$ ")
+	})
 
-		// WHEN we execute the cd command with the d1
-		err := run(strings.NewReader(fmt.Sprintf("cd %s\n", d2)), &output)
-		// THEN should return path not exist message with error
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
+	t.Run("CdReportsMissingDirectory", func(t *testing.T) {
+		// GIVEN a known working directory and a path that does not exist
+		startDir := resolvedTempDir(t)
+		t.Chdir(startDir)
+		missingDir := filepath.Join(startDir, "missing")
 
-		want := fmt.Sprintf("$ cd: %s: No such file or directory\n$ ", d2)
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		// WHEN we execute cd with the missing path
+		// THEN the shell reports that the directory does not exist
+		assertRunOutput(t, "cd '"+missingDir+"'\n", "$ cd: "+missingDir+": No such file or directory\n$ ")
+	})
+
+	t.Run("RunsExternalCommand", func(t *testing.T) {
+		// GIVEN an external executable on PATH that prints a message
+		dir := t.TempDir()
+		writeFixture(t, dir, "print_message", "#!/bin/sh\necho external\n", 0o755)
+		t.Setenv("PATH", dir)
+
+		// WHEN we run the external command
+		// THEN its output appears after the prompt
+		assertRunOutput(t, "print_message hello", "$ external\n")
 	})
 }
 
 func TestRun(t *testing.T) {
-	t.Run("WithMultipleCommands", func(t *testing.T) {
-		var output bytes.Buffer
-		want := "$ Hello World\n$ echo is a shell builtin\n$ "
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "StopsAfterExit",
+			input: "exit\n",
+			want:  "$ ",
+		},
+		{
+			name:  "PrintsPromptBeforeEOF",
+			input: "",
+			want:  "$ ",
+		},
+		{
+			name:  "PromptsAgainAfterBlankLine",
+			input: "\n",
+			want:  "$ $ ",
+		},
+		{
+			name:  "ExecutesFinalLineWithoutNewline",
+			input: "echo Hello World",
+			want:  "$ Hello World\n",
+		},
+		{
+			name:  "ExecutesMultipleCommandsInOrder",
+			input: "echo Hello World\n type echo\n",
+			want:  "$ Hello World\n$ echo is a shell builtin\n$ ",
+		},
+		{
+			name:  "ContinuesAfterUnclosedSingleQuote",
+			input: "echo 'unclosed\necho still running\n",
+			want:  "$ error: closing single quote not found\n$ still running\n$ ",
+		},
+	}
 
-		err := run(strings.NewReader("echo Hello World\n type echo\n"), &output)
-		if err != nil {
-			t.Fatalf("should not fail %v", err)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertRunOutput(t, tc.input, tc.want)
+		})
+	}
+}
 
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
+func assertRunOutput(t *testing.T, input, want string) {
+	t.Helper()
 
-	t.Run("WithMultipleArgs", func(t *testing.T) {
-		var output bytes.Buffer
-		want := "$ echo is a shell builtin\ntype is a shell builtin\n"
-
-		err := run(strings.NewReader("type echo type"), &output)
-		if err != nil {
-			t.Fatalf("should not fail %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
-
-	t.Run("ForExternalCommand", func(t *testing.T) {
-		// GIVEN a writer and an external executable command always_false that always returns false
-		dir := t.TempDir()
-		executable := filepath.Join(dir, "always_false")
-		if err := os.WriteFile(
-			executable,
-			[]byte("#!/bin/sh\necho false\n"),
-			PermExecutable,
-		); err != nil {
-			t.Fatalf("create executable fixture: %v", err)
-		}
-
-		t.Setenv("PATH", dir)
-
-		var output bytes.Buffer
-		want := "$ false\n"
-
-		// WHEN we call run with
-		err := run(strings.NewReader("always_false hello"), &output)
-		if err != nil {
-			t.Fatalf("should not fail: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
-
-	t.Run("ContinuesAfterUnclosedSingleQuote", func(t *testing.T) {
-		var output bytes.Buffer
-		want := "$ error: closing single quote not found\n$ still running\n$ "
-
-		err := run(strings.NewReader("echo 'unclosed\necho still running\n"), &output)
-		if err != nil {
-			t.Fatalf("should not error: %v", err)
-		}
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
+	var output bytes.Buffer
+	if err := run(strings.NewReader(input), &output); err != nil {
+		t.Fatalf("run(%q): %v", input, err)
+	}
+	if got := output.String(); got != want {
+		t.Errorf("run(%q) output = %q, want %q", input, got, want)
+	}
 }

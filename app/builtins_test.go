@@ -2,103 +2,79 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestEcho(t *testing.T) {
+func TestEchoJoinsArguments(t *testing.T) {
 	var output bytes.Buffer
-	want := "hello world\n"
-
-	err := handleEcho([]string{"hello", "world"}, &output)
-	if err != nil {
-		t.Fatalf("should not error: %v", err)
+	if err := handleEcho([]string{"hello", "world"}, &output); err != nil {
+		t.Fatalf("handleEcho: %v", err)
 	}
-
-	if got := output.String(); got != want {
-		t.Errorf("got %q, want %q", got, want)
+	if got, want := output.String(), "hello world\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
 	}
 }
 
 func TestType(t *testing.T) {
-	testCase := map[string]struct {
-		input []string
-		want  string
+	t.Setenv("PATH", t.TempDir())
+
+	testCases := []struct {
+		name string
+		args []string
+		want string
 	}{
-		"WithBuitinCommandEcho": {
-			input: []string{"echo"},
-			want:  "echo is a shell builtin\n",
+		{name: "IdentifiesEchoAsBuiltin", args: []string{"echo"}, want: "echo is a shell builtin\n"},
+		{name: "IdentifiesExitAsBuiltin", args: []string{"exit"}, want: "exit is a shell builtin\n"},
+		{name: "IdentifiesTypeAsBuiltin", args: []string{"type"}, want: "type is a shell builtin\n"},
+		{name: "IdentifiesPwdAsBuiltin", args: []string{"pwd"}, want: "pwd is a shell builtin\n"},
+		{name: "IdentifiesCdAsBuiltin", args: []string{"cd"}, want: "cd is a shell builtin\n"},
+		{
+			name: "ReportsMultipleBuiltinsInOrder",
+			args: []string{"type", "echo"},
+			want: "type is a shell builtin\necho is a shell builtin\n",
 		},
-		"WithBuitinCommandExit": {
-			input: []string{"exit"},
-			want:  "exit is a shell builtin\n",
+		{
+			name: "ReportsUnknownCommand",
+			args: []string{"invalid_command"},
+			want: "invalid_command: not found\n",
 		},
-		"WithBuitinCommandType": {
-			input: []string{"type"},
-			want:  "type is a shell builtin\n",
+		{
+			name: "ReportsBuiltinThenUnknownCommand",
+			args: []string{"echo", "invalid_command"},
+			want: "echo is a shell builtin\ninvalid_command: not found\n",
 		},
-		"WithBuilinCommandPwd": {
-			input: []string{"pwd"},
-			want:  "pwd is a shell builtin\n",
+		{
+			name: "ReportsUnknownCommandThenBuiltin",
+			args: []string{"invalid_command", "echo"},
+			want: "invalid_command: not found\necho is a shell builtin\n",
 		},
-		"WithBuiltinCdTyp": {
-			input: []string{"cd"},
-			want:  "cd is a shell builtin\n",
-		},
-		"WithMulitpleBuitinCommandType": {
-			input: []string{"type", "echo"},
-			want:  "type is a shell builtin\necho is a shell builtin\n",
-		},
-		"WithUnknownCommand": {
-			input: []string{"invalid_command"},
-			want:  "invalid_command: not found\n",
-		},
-		"WithKnownAndUnknownCommand": {
-			input: []string{"echo", "invalid_command"},
-			want:  "echo is a shell builtin\ninvalid_command: not found\n",
-		},
-		"WithUnknownAndKnownCommand": {
-			input: []string{"invalid_command", "echo"},
-			want:  "invalid_command: not found\necho is a shell builtin\n",
-		},
-		"WithUnKnownAndUnknownCommand": {
-			input: []string{"invalid_command", "banana"},
-			want:  "invalid_command: not found\nbanana: not found\n",
+		{
+			name: "ReportsMultipleUnknownCommandsInOrder",
+			args: []string{"invalid_command", "banana"},
+			want: "invalid_command: not found\nbanana: not found\n",
 		},
 	}
 
-	for name, tc := range testCase {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			var output bytes.Buffer
-
-			err := handleType(tc.input, &output)
-			if err != nil {
-				t.Fatalf("should not error: %v", err)
+			if err := handleType(tc.args, &output); err != nil {
+				t.Fatalf("handleType(%q): %v", tc.args, err)
 			}
-
 			if got := output.String(); got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
+				t.Errorf("output = %q, want %q", got, tc.want)
 			}
 		})
 	}
 }
 
-func TestTypeReturnsExecutable(t *testing.T) {
-	// GIVEN a directory d1 on PATH with an executable mytool
+func TestTypeReportsExecutablePath(t *testing.T) {
+	// GIVEN a directory on PATH with an executable named mytool
 	dir := t.TempDir()
-	executable := filepath.Join(dir, "mytool")
-
-	if err := os.WriteFile(
-		executable,
-		[]byte("#!/bin/sh\nexit 0\n"),
-		PermExecutable,
-	); err != nil {
-		t.Fatalf("create executable fixture: %v", err)
-	}
-
+	executable := writeFixture(t, dir, "mytool", "#!/bin/sh\nexit 0\n", 0o755)
 	t.Setenv("PATH", dir)
 
 	var output bytes.Buffer
@@ -106,445 +82,170 @@ func TestTypeReturnsExecutable(t *testing.T) {
 	if err := handleType([]string{"mytool"}, &output); err != nil {
 		t.Fatalf("handleType: %v", err)
 	}
-
-	want := "mytool is " + executable + "\n"
-	// THEN mytool
-	if got := output.String(); got != want {
-		t.Errorf("got %q, want %q", got, want)
+	// THEN type prints the path to mytool
+	if got, want := output.String(), "mytool is "+executable+"\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
 	}
 }
 
 func TestFindExecutable(t *testing.T) {
-	testCases := map[string]struct {
-		fileName         string
-		executableExists bool
-		setup            func() string
-	}{
-		"InFirstDirectory": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN the first directory d1 in path containing executable e1
-				dir := t.TempDir()
-				executable := filepath.Join(dir, "mytool")
-				if err := os.WriteFile(
-					executable,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+	const command = "mytool"
+	const script = "#!/bin/sh\nexit 0\n"
+	separator := string(os.PathListSeparator)
 
-				t.Setenv("PATH", dir)
-				return executable
-			},
-		},
-		"InSecondDirectory": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN a directory d1 located second in path with executable e1
-				// e.g. "file/to/path1:d1"
-				dirDummy := t.TempDir()
-				dir := t.TempDir()
-				path := strings.Join([]string{dirDummy, dir}, ":")
-				executable := filepath.Join(dir, "mytool")
-				if err := os.WriteFile(
-					executable,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+	t.Run("FindsExecutableInFirstDirectory", func(t *testing.T) {
+		// GIVEN the first directory on PATH contains mytool
+		dir := t.TempDir()
+		want := writeFixture(t, dir, command, script, 0o755)
+		t.Setenv("PATH", dir)
 
-				t.Setenv("PATH", path)
-				return executable
-			},
-		},
-		// This verifies when we have two files named the same
-		// under two different directories in PATH, we return the
-		// first one that is executable
-		"WithSameFilenameOnlyOneExecutable": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN a directory d1 with filename f1 with non-exec permissions
-				// GIVEN a directory d2 with filename f1 with exec permissions
-				// GIVEN an env PATH d1:d2
-				d1 := t.TempDir()
-				d2 := t.TempDir()
-				p1 := filepath.Join(d1, "mytool")
-				p2 := filepath.Join(d2, "mytool")
-				if err := os.WriteFile(
-					p1,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermReadWrite,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
-				if err := os.WriteFile(
-					p2,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+		assertExecutablePath(t, command, want)
+	})
 
-				t.Setenv("PATH", strings.Join([]string{d1, d2}, ":"))
-				return p2
-			},
-		},
-		// This tests we return first executable when there are multiple
-		// under different directories in PATH
-		"WithMultilpeDirSameExecutable": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN a directory d1 with filename f1 with non-exec permissions
-				// GIVEN a directory d2 with filename f2 with exec permissions
-				// GIVEN a directory d3 with filename f2 with exec permissions
-				// GIVEN an env PATH d1:d2:d3
-				d1 := t.TempDir()
-				d2 := t.TempDir()
-				d3 := t.TempDir()
-				p1 := filepath.Join(d1, "badTool")
-				p2 := filepath.Join(d2, "mytool")
-				p3 := filepath.Join(d3, "mytool")
-				if err := os.WriteFile(
-					p1,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermReadWrite,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
-				if err := os.WriteFile(
-					p2,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
-				if err := os.WriteFile(
-					p3,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+	t.Run("SearchesNextDirectoryWhenCommandIsMissing", func(t *testing.T) {
+		// GIVEN mytool is only in the second directory on PATH
+		first, second := t.TempDir(), t.TempDir()
+		want := writeFixture(t, second, command, script, 0o755)
+		t.Setenv("PATH", strings.Join([]string{first, second}, separator))
 
-				t.Setenv("PATH", strings.Join([]string{d1, d2, d3}, ":"))
-				return p2
-			},
-		},
-		"WithNoExecutableFiles": {
-			fileName:         "invalid_command",
-			executableExists: false,
-			setup: func() string {
-				// GIVEN a directory d1 with filename f1 with non-exec permissions
-				d1 := t.TempDir()
-				p1 := filepath.Join(d1, "invalid_command")
-				if err := os.WriteFile(
-					p1,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermReadWrite,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
-				t.Setenv("PATH", d1)
-				return p1
-			},
-		},
-		"WithLeadingPathListSeparator": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN the first directory d1 in path containing executable e1
-				dir := t.TempDir()
-				executable := filepath.Join(dir, "mytool")
-				if err := os.WriteFile(
-					executable,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+		assertExecutablePath(t, command, want)
+	})
 
-				// GIVEN leading path list separator
-				t.Setenv("PATH", strings.Join([]string{"", dir}, ":"))
-				return executable
-			},
-		},
-		"WithTrailingPathListSeparator": {
-			fileName:         "mytool",
-			executableExists: true,
-			setup: func() string {
-				// GIVEN the first directory d1 in path containing executable e1
-				dir := t.TempDir()
-				executable := filepath.Join(dir, "mytool")
-				if err := os.WriteFile(
-					executable,
-					[]byte("#!/bin/sh\nexit 0\n"),
-					PermExecutable,
-				); err != nil {
-					t.Fatalf("create executable fixture: %v", err)
-				}
+	t.Run("SkipsNonExecutableWithSameName", func(t *testing.T) {
+		// GIVEN PATH lists a non-executable mytool before an executable mytool
+		first, second := t.TempDir(), t.TempDir()
+		writeFixture(t, first, command, script, 0o644)
+		want := writeFixture(t, second, command, script, 0o755)
+		t.Setenv("PATH", strings.Join([]string{first, second}, separator))
 
-				// GIVEN leading path list separator
-				t.Setenv("PATH", strings.Join([]string{dir, ""}, ":"))
-				return executable
-			},
-		},
-	}
+		assertExecutablePath(t, command, want)
+	})
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			executableDir := tc.setup()
-			// WHEN calling findExecutable with executable name and PATH
-			got, found := findExecutable(tc.fileName, "PATH")
-			// THEN we return the found executable path (if exists)
-			if tc.executableExists {
-				if !found {
-					t.Fatalf("executable %s should exist", tc.fileName)
-				}
+	t.Run("ReturnsFirstExecutableOnPath", func(t *testing.T) {
+		// GIVEN both directories on PATH contain an executable named mytool
+		first, second := t.TempDir(), t.TempDir()
+		want := writeFixture(t, first, command, script, 0o755)
+		writeFixture(t, second, command, script, 0o755)
+		t.Setenv("PATH", strings.Join([]string{first, second}, separator))
 
-				if got != executableDir {
-					t.Errorf("got %q, want %q", got, executableDir)
-				}
-			} else {
-				if found {
-					t.Fatalf("should not find executable: %s", tc.fileName)
-				}
-				if got != "" {
-					t.Errorf("got path: %q", got)
-				}
-			}
-		})
-	}
+		assertExecutablePath(t, command, want)
+	})
+
+	t.Run("ReportsCommandMissingWhenFileIsNotExecutable", func(t *testing.T) {
+		// GIVEN the only matching file on PATH is non-executable
+		dir := t.TempDir()
+		writeFixture(t, dir, command, script, 0o644)
+		t.Setenv("PATH", dir)
+
+		assertExecutablePath(t, command, "")
+	})
+
+	t.Run("SearchesPastLeadingEmptyPathEntry", func(t *testing.T) {
+		// GIVEN PATH starts with an empty entry before the directory containing mytool
+		t.Chdir(t.TempDir())
+		dir := t.TempDir()
+		want := writeFixture(t, dir, command, script, 0o755)
+		t.Setenv("PATH", separator+dir)
+
+		assertExecutablePath(t, command, want)
+	})
+
+	t.Run("FindsExecutableWithTrailingEmptyPathEntry", func(t *testing.T) {
+		// GIVEN PATH ends with an empty entry after the directory containing mytool
+		t.Chdir(t.TempDir())
+		dir := t.TempDir()
+		want := writeFixture(t, dir, command, script, 0o755)
+		t.Setenv("PATH", dir+separator)
+
+		assertExecutablePath(t, command, want)
+	})
+
+	t.Run("ReturnsDotSlashForCurrentDirectory", func(t *testing.T) {
+		// GIVEN an executable in the current directory and a relative PATH entry of "."
+		dir := t.TempDir()
+		t.Chdir(dir)
+		writeFixture(t, dir, command, script, 0o755)
+		t.Setenv("PATH", ".")
+
+		assertExecutablePath(t, command, "./"+command)
+	})
 }
 
-func TestFindExecutableReturnsFileSeparatorWithRelativePath(t *testing.T) {
-	// GIVEN an executable in the current directory,
-	// with PATH containing a relative directory.
-	dir := t.TempDir()
-	t.Chdir(dir)
-	want := "./mytool"
+func assertExecutablePath(t *testing.T, command, wantPath string) {
+	t.Helper()
 
-	const command = "mytool"
-
-	if err := os.WriteFile(
-		command,
-		[]byte("#!/bin/sh\nexit 0\n"),
-		PermExecutable,
-	); err != nil {
-		t.Fatalf("create executable fixture: %v", err)
-	}
-
-	t.Setenv("PATH", ".")
-
-	// WHEN finding the executable.
+	// WHEN calling findExecutable with the command name and PATH
 	got, found := findExecutable(command, "PATH")
 
-	// THEN it is found and with "/" file separator attached
-	if !found {
-		t.Fatalf("should find command: %s", command)
-	}
-
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
+	// THEN it reports whether the command was found and returns the expected path
+	wantFound := wantPath != ""
+	if got != wantPath || found != wantFound {
+		t.Errorf("findExecutable(%q, \"PATH\") = (%q, %t), want (%q, %t)", command, got, found, wantPath, wantFound)
 	}
 }
 
-func TestPwd(t *testing.T) {
+func TestPwdPrintsWorkingDirectory(t *testing.T) {
+	// GIVEN a known working directory
+	dir := resolvedTempDir(t)
+	t.Chdir(dir)
+
 	var output bytes.Buffer
-	// GIVEN a directory d1
-	d1 := t.TempDir()
-	want := fmt.Sprintf("%s\n", d1)
-
-	// GIVEN Chdir to d1
-	t.Chdir(d1)
-
 	// WHEN calling handlePwd
-	err := handlePwd(&output)
-	if err != nil {
-		t.Fatalf("should not error: %v", err)
+	if err := handlePwd(&output); err != nil {
+		t.Fatalf("handlePwd: %v", err)
 	}
-
-	// THEN no error & d1 is written to output
-	if got := output.String(); got != want {
-		t.Errorf("got %q, want %q", got, want)
+	// THEN it writes the current working directory followed by a newline
+	if got, want := output.String(), dir+"\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
 	}
 }
 
 func TestCd(t *testing.T) {
-	t.Run("WithExistingPath", func(t *testing.T) {
-		var output bytes.Buffer
-		// GIVEN a cwd d1 and another abs directory path d2
-		t.Chdir(t.TempDir())
-		d2, err := filepath.EvalSymlinks(t.TempDir())
-		if err != nil {
-			t.Fatalf("evaluating symbolic links: %v", err)
-		}
+	// GIVEN a starting directory, a missing path, and a separate directory set as HOME
+	startDir := resolvedTempDir(t)
+	targetDir := resolvedTempDir(t)
+	missingDir := filepath.Join(startDir, "missing")
+	t.Setenv("HOME", targetDir)
 
-		// WHEN executing command cd with arg d1
-		if err = handleCd(d2, &output); err != nil {
-			t.Fatalf("executing cd with %q: %v", d2, err)
-		}
+	testCases := []struct {
+		name       string
+		arg        string
+		wantDir    string
+		wantOutput string
+	}{
+		{name: "ChangesToAbsoluteDirectory", arg: targetDir, wantDir: targetDir},
+		{name: "ChangesToParentDirectory", arg: "../", wantDir: filepath.Dir(startDir)},
+		{name: "StaysInCurrentDirectoryForDot", arg: "./", wantDir: startDir},
+		{name: "ExpandsTildeToHome", arg: "~", wantDir: targetDir},
+		{
+			name:       "ReportsMissingDirectoryAndStaysInPlace",
+			arg:        missingDir,
+			wantDir:    startDir,
+			wantOutput: "cd: " + missingDir + ": No such file or directory\n",
+		},
+	}
 
-		// Then the current working directory is d2
-		got, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("calling Getwd: %v", err)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Chdir(startDir)
 
-		if got != d2 {
-			t.Errorf("got %q, want %q", got, d2)
-		}
-	})
+			var output bytes.Buffer
+			// WHEN changing directory using the case's argument
+			if err := handleCd(tc.arg, &output); err != nil {
+				t.Fatalf("handleCd(%q): %v", tc.arg, err)
+			}
+			// THEN cd produces the expected output and leaves the shell in the expected directory
+			if got := output.String(); got != tc.wantOutput {
+				t.Errorf("output = %q, want %q", got, tc.wantOutput)
+			}
 
-	t.Run("WithNonExistentPath", func(t *testing.T) {
-		var output bytes.Buffer
-		// GIVEN a cwd d1 and a non existant directory d2
-		d1 := t.TempDir()
-		t.Chdir(d1)
-		d2 := "/does/not/exist"
-
-		// WHEN executing command cd with d2
-		err := handleCd(d2, &output)
-		// THEN error is written: cd <directory>: No such file or directory
-		// AND current path should be unchanged (no-op)
-		if err != nil {
-			t.Fatalf("should not return error when dir does not exist: %v", err)
-		}
-		want := fmt.Sprintf("cd: %s: No such file or directory\n", d2)
-
-		if got := output.String(); got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("calling Getwd: %v", err)
-		}
-
-		if cwd != d1 {
-			t.Errorf("current working directory should have not changed: got %q, want %q ", cwd, d1)
-		}
-	})
-
-	t.Run("WithRelativeParentDir", func(t *testing.T) {
-		var output bytes.Buffer
-		// GIVEN a cwd d1 and another relative dir "../"
-		cwd := t.TempDir()
-		t.Chdir(cwd)
-		d1, err := filepath.EvalSymlinks(cwd)
-		if err != nil {
-			t.Fatalf("evaluating symbolic links: %v", err)
-		}
-
-		d2 := "../"
-
-		// WHEN executing command cd with arg d1
-		if err = handleCd(d2, &output); err != nil {
-			t.Fatalf("executing cd with %q: %v", d2, err)
-		}
-
-		// Then the current working directory is d2
-		got, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("calling Getwd: %v", err)
-		}
-		want := filepath.Dir(d1)
-
-		if got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
-	})
-
-	t.Run("WithRelativeCurrDir", func(t *testing.T) {
-		// GIVEN a known working directory.
-		t.Chdir(t.TempDir())
-		before, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("get starting working directory: %v", err)
-		}
-
-		// WHEN changing to the current directory using a relative path.
-		var output bytes.Buffer
-		if err := handleCd("./", &output); err != nil {
-			t.Fatalf("cd ./ should succeed: %v", err)
-		}
-
-		// THEN the working directory is unchanged and no output is written.
-		after, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("get working directory after cd: %v", err)
-		}
-
-		if after != before {
-			t.Errorf("working directory changed: got %q, want %q", after, before)
-		}
-		if got := output.String(); got != "" {
-			t.Errorf("successful cd should write no output, got %q", got)
-		}
-	})
-
-	t.Run("WithTilder", func(t *testing.T) {
-		// GIVEN a default home dir d1
-		t.Chdir(t.TempDir())
-		want, err := filepath.EvalSymlinks(os.Getenv("HOME"))
-		if err != nil {
-			t.Fatalf("evaluating symlink of path: %v", err)
-		}
-
-		// WHEN changing to home directory using ~
-		var output bytes.Buffer
-		if err := handleCd("~", &output); err != nil {
-			t.Fatalf("cd ~ should succeed: %v", err)
-		}
-
-		// THEN the working directory should be $HOME and no output is written
-		after, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("get working directory after cd: %v", err)
-		}
-
-		if after != want {
-			t.Errorf("working directory changed: got %q, want %q", after, want)
-		}
-
-		if output.String() != "" {
-			t.Errorf("successful cd should write no output: got %q", &output)
-		}
-	})
-
-	t.Run("WithTilderAndNonDefaultHome", func(t *testing.T) {
-		// GIVEN a new home directory d1
-		t.Chdir(t.TempDir())
-		d1 := t.TempDir()
-		os.Setenv("HOME", d1)
-		want, err := filepath.EvalSymlinks(os.Getenv("HOME"))
-		if err != nil {
-			t.Fatalf("evaluating symlink of path: %v", err)
-		}
-
-		// WHEN changing to home directory using ~
-		var output bytes.Buffer
-		if err := handleCd("~", &output); err != nil {
-			t.Fatalf("cd ~ should succeed: %v", err)
-		}
-
-		// THEN the working directory should be $HOME and no output is written
-		after, err := os.Getwd()
-		if err != nil {
-			t.Fatalf("get working directory after cd: %v", err)
-		}
-
-		if after != want {
-			t.Errorf("working directory changed: got %q, want %q", after, want)
-		}
-
-		if output.String() != "" {
-			t.Errorf("successful cd should write no output: got %q", &output)
-		}
-	})
+			got, err := os.Getwd()
+			if err != nil {
+				t.Fatalf("get working directory: %v", err)
+			}
+			if got != tc.wantDir {
+				t.Errorf("working directory = %q, want %q", got, tc.wantDir)
+			}
+		})
+	}
 }
